@@ -1,0 +1,3 @@
+{%- for item in listNode.items -%}
+    {{ include('list-item.md.twig', {text: item.contentsAsString, prefix: item.prefix}) }}
+{%- endfor %}
