@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="2.0" xmlns="urn:oasis:names:tc:xliff:document:2.0" srcLang="en">
+  <file id="changelog-mcp-reaction">
+    <unit id="description">
+      <segment state="final">
+        <source>TYPO3 Changelog MCP</source>
+      </segment>
+    </unit>
+  </file>
+</xliff>
