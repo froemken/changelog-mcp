@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "typo3/cms-core": "^14"
+        "typo3/cms-core": "^14.0",
+        "mcp/sdk": "^0.4"
     },
     "autoload": {
         "psr-4": {
