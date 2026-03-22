@@ -2,7 +2,7 @@
 
 $EM_CONF[$_EXTKEY] = [
     'title' => 'MCP for TYPO3 Changelogs',
-    'description' => 'Catagogue the TYPO3 contained changelogs and provide information via MCP',
+    'description' => 'Catalogue the TYPO3 contained changelogs and provide information via MCP',
     'category' => 'services',
     'state' => 'alpha',
     'author' => 'Stefan Froemken',
