@@ -11,16 +11,16 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Domain\Repository;
 
-use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class ChangelogRepository
+class ChangelogRepository implements LoggerAwareInterface
 {
-    private const CHANGELOG_DIRECTORY = 'EXT:core/Documentation/Changelog/';
+    use LoggerAwareTrait;
 
-    public function __construct(
-        protected LoggerInterface $logger,
-    ) {}
+    private const ORIGINAL_TYPO3_CHANGELOG_DIRECTORY = 'EXT:core/Documentation/Changelog/';
 
     /**
      * Returns just the directory names like 10.4, 11.2, and 13.4.x
@@ -28,7 +28,7 @@ class ChangelogRepository
     public function getTypo3VersionDirectories(): array
     {
         $directories = GeneralUtility::get_dirs(
-            GeneralUtility::getFileAbsFileName(self::CHANGELOG_DIRECTORY),
+            GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
         );
 
         if ($directories === null) {
@@ -68,11 +68,11 @@ class ChangelogRepository
     /**
      * Needed to convert rst files to Markdown
      */
-    public function getAllChangelogFiles(): array
+    public function getAllOriginalTypo3ChangelogFiles(): array
     {
         return GeneralUtility::getAllFilesAndFoldersInPath(
             [],
-            GeneralUtility::getFileAbsFileName(self::CHANGELOG_DIRECTORY),
+            GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
             'rst',
             false,
             2,
@@ -84,7 +84,7 @@ class ChangelogRepository
     {
         $changelogFiles = [];
         foreach ($this->getChangelogDirectoriesForVersion($version) as $directory) {
-            foreach (GeneralUtility::getFilesInDir($directory, 'rst') as $file) {
+            foreach (GeneralUtility::getFilesInDir($directory, 'md') as $file) {
                 if (str_starts_with(basename($file), $type)) {
                     $changelogFiles[] = $directory . '/' . $file;
                 }
@@ -113,7 +113,9 @@ class ChangelogRepository
         if (count($versionParts) >= 2) {
             foreach ($availableDirectories as $availableDirectory) {
                 if ($availableDirectory === $majorMinorVersion) {
-                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(self::CHANGELOG_DIRECTORY . $availableDirectory);
+                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(
+                        Environment::getVarPath() . '/prepared_changelogs/' . $availableDirectory,
+                    );
                     break;
                 }
             }
@@ -123,7 +125,9 @@ class ChangelogRepository
         if ($foundDirectories === [] && $majorVersion !== '') {
             foreach ($availableDirectories as $availableDirectory) {
                 if (str_starts_with($availableDirectory, $majorVersion . '.')) {
-                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(self::CHANGELOG_DIRECTORY . $availableDirectory);
+                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(
+                        Environment::getVarPath() . '/prepared_changelogs/' . $availableDirectory,
+                    );
                 }
             }
         }

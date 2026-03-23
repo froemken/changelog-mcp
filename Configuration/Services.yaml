@@ -3,7 +3,9 @@ services:
     autowire: true
     autoconfigure: true
     public: false
+
   StefanFroemken\ChangelogMcp\:
     resource: '../Classes/*'
-    exclude:
-      - '../Classes/Domain/Model/*'
+
+  StefanFroemken\ChangelogMcp\Tool\FindChangelogTool:
+    public: true

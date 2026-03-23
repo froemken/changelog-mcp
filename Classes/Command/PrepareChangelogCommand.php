@@ -41,7 +41,7 @@ class PrepareChangelogCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $files = $this->changelogRepository->getAllChangelogFiles();
+        $files = $this->changelogRepository->getAllOriginalTypo3ChangelogFiles();
         $parser = $this->parserFactory->getParser();
 
         foreach ($files as $absFile) {
