@@ -26,7 +26,7 @@ use TYPO3\CMS\Reactions\Reaction\ReactionInterface;
  * It searches prepared TYPO3 changelog files.
  * And returns more context-related information.
  */
-final readonly class ChangelogMcpReaction implements ReactionInterface
+readonly class ChangelogMcpReaction implements ReactionInterface
 {
     public function __construct(
         private LoggerInterface $logger,
