@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Service;
 
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class ChangelogService
