@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="2.0" xmlns="urn:oasis:names:tc:xliff:document:2.0" srcLang="en">
+  <file id="changelog-mcp-db">
+    <unit id="tx_changelogmcp_changelog">
+      <segment state="final">
+        <source>TYPO3 Changelog</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.title">
+      <segment state="final">
+        <source>Title</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type">
+      <segment state="final">
+        <source>Change Type</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.feature">
+      <segment state="final">
+        <source>Feature</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.deprecation">
+      <segment state="final">
+        <source>Deprecation</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.important">
+      <segment state="final">
+        <source>Important</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.bugfix">
+      <segment state="final">
+        <source>Bugfix</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.version_string">
+      <segment state="final">
+        <source>Version String</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.major_version">
+      <segment state="final">
+        <source>Major Version</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.issue_number">
+      <segment state="final">
+        <source>Issue Number</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.tags">
+      <segment state="final">
+        <source>Tags</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.content">
+      <segment state="final">
+        <source>Content</source>
+      </segment>
+    </unit>
+  </file>
+</xliff>
