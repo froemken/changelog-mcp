@@ -10,6 +10,7 @@
 		}
 	],
 	"require": {
+		"ext-mbstring": "*",
 		"typo3/cms-core": "^14.0",
 		"typo3/cms-reactions": "^14.0",
 		"doctrine/rst-parser": "^0.5",

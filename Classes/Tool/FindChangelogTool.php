@@ -31,66 +31,52 @@ final class FindChangelogTool
     }
 
     /**
-     * Searches the TYPO3 changelog database for breaking changes, features, and deprecations.
+     * Search the TYPO3 changelog database for specific topics.
      */
     #[McpTool(
-        name: 'find_typo3_changelog',
-        description: 'Search for TYPO3 upgrade instructions, breaking changes, or features. Best used with a specific version and type.'
+        name: 'search_typo3_changelogs',
+        description: 'SEARCH TOOL: Use this to find TYPO3 changelog UIDs and code examples. Search by keyword (e.g. "encryption") to get the UID for the content tool.'
     )]
-    public function listChangelogs(
-        #[Schema(
-            description: 'The search term or topic (e.g., "TCA", "Fluid", "DataHandler").',
-            minLength: 2,
-        )]
+    public function searchChangelogs(
+        #[Schema(description: 'The search term, e.g. "encryption" or "TCA".')]
         string $query,
 
-        #[Schema(
-            description: 'The TYPO3 version. Supports major (e.g., "12") or specific versions (e.g., "12.4").',
-            pattern: '^\d+(\.\d+)*$',
-        )]
-        ?string $version = null,
+        #[Schema(description: 'Optional TYPO3 version, e.g. "14" or "12.4".')]
+        string $version = '',
 
-        #[Schema(
-            description: 'The category of the changelog entry.',
-            enum: ['breaking', 'feature', 'important', 'deprecated'],
-        )]
-        ?string $type = null
-    ): string {
-        $this->logger->info(sprintf(
-            'Executing find_typo3_changelog: [Query: %s] [Version: %s] [Type: %s]',
-            $query,
-            $version ?? 'any',
-            $type ?? 'any',
-        ));
+        #[Schema(description: 'Optional category, e.g. "breaking" or "feature".')]
+        string $type = ''
+    ): array {
+        $this->logger->info(sprintf('Search: [Query: %s] [Version: %s]', $query, $version));
 
-        $searchResults = $this->changelogRepository->getChangelogs($query, $version, $type);
+        // Wir wandeln leere Strings intern wieder in null um für das Repository
+        $versionParam = $version === '' ? null : $version;
+        $typeParam = $type === '' ? null : $type;
+
+        $searchResults = $this->changelogRepository->getChangelogs($query, $versionParam, $typeParam);
 
         if (empty($searchResults)) {
-            return "No TYPO3 changelogs found matching your criteria ($query, $version, $type).";
+            return [
+                'content' => [['type' => 'text', 'text' => "No results for '$query'."]],
+            ];
         }
 
         $output = [];
         foreach (array_slice($searchResults, 0, 10) as $result) {
-            $abstract = $result['content'];
-            if (mb_strlen($abstract) > 150) {
-                $abstract = mb_substr($abstract, 0, 150);
-                $lastSpace = mb_strrpos($abstract, ' ');
-                $abstract = ($lastSpace !== false) ? mb_substr($abstract, 0, $lastSpace) : $abstract;
-                $abstract .= '...';
-            }
-
             $output[] = sprintf(
-                "UID: %d | %s (v%s)\nType: %s | Score: %d\nAbstract: %s",
+                "UID: %d | %s (v%s)\nAbstract: %s",
                 $result['uid'],
                 $result['title'],
                 $result['version_string'],
-                $result['change_type'],
-                $result['score'],
-                $abstract,
+                mb_strimwidth($result['content'], 0, 150, '...')
             );
         }
 
-        return "Relevant TYPO3 changelogs:\n\n" . implode("\n\n---\n\n", $output);
+        return [
+            'content' => [
+                ['type' => 'text', 'text' => "Found UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
+            ],
+        ];
     }
 
     /**
@@ -98,21 +84,36 @@ final class FindChangelogTool
      */
     #[McpTool(
         name: 'get_typo3_changelog_content',
-        description: 'Returns the full content of a TYPO3 changelog entry. Use the UID obtained from find_typo3_changelog.'
+        description: 'CONTENT TOOL: Retrieves the full technical documentation and official PHP code examples for a specific TYPO3 change. Use this to provide the user with exact implementation details found in the changelog.',
     )]
     public function getChangelogContentTool(
-        #[Schema(description: 'The unique identifier (UID) of the changelog entry.')]
+        #[Schema(description: 'The UID of the changelog entry.')]
         int $uid,
-    ): string {
+    ): array {
         $this->logger->info(sprintf('Fetching full content for TYPO3 changelog UID: %d', $uid));
 
         $content = $this->changelogRepository->getChangelogContentByUid($uid);
 
         if ($content === null) {
             $this->logger->error(sprintf('Changelog UID %d not found in database.', $uid));
-            return "Error: Changelog entry with UID {$uid} could not be found.";
+            return [
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => "Error: Changelog entry with UID {$uid} could not be found.",
+                    ],
+                ],
+                'isError' => true,
+            ];
         }
 
-        return $content;
+        return [
+            'content' => [
+                [
+                    'type' => 'text',
+                    'text' => $content,
+                ],
+            ],
+        ];
     }
 }
