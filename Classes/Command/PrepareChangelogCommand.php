@@ -19,7 +19,6 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 #[AsCommand(
     name: 'mcp:changelog:prepare',
@@ -34,14 +33,9 @@ class PrepareChangelogCommand extends Command
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
-        GeneralUtility::mkdir_deep($this->changelogService->getOutputDirectory());
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $files = $this->changelogRepository->getAllOriginalTypo3ChangelogFiles();
+        $files = $this->changelogService->getAllOriginalTypo3ChangelogFiles();
         $parser = $this->parserFactory->getParser();
 
         foreach ($files as $absFile) {
@@ -51,17 +45,10 @@ class PrepareChangelogCommand extends Command
                 continue;
             }
 
-            $document = $parser->parse($changelog->getContent())->render();
-
-            $targetFile = sprintf(
-                '%s%s/%s',
-                $this->changelogService->getOutputDirectory(),
-                $changelog->getTypo3Version(),
-                $changelog->getMarkDownFilename(),
+            $this->changelogRepository->create(
+                $changelog,
+                $parser->parse($changelog->getContent())->render(),
             );
-
-            GeneralUtility::mkdir_deep(dirname($targetFile));
-            GeneralUtility::writeFile($targetFile, $document);
         }
 
         return Command::SUCCESS;

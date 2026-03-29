@@ -13,14 +13,40 @@ namespace StefanFroemken\ChangelogMcp\Domain\Repository;
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use StefanFroemken\ChangelogMcp\Service\Changelog;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class ChangelogRepository implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    private const ORIGINAL_TYPO3_CHANGELOG_DIRECTORY = 'EXT:core/Documentation/Changelog/';
+    private const TABLE = 'tx_changelogmcp_changelog';
+
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+    ) {}
+
+    public function create(Changelog $changelog, string $content): void
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        $connection->insert(
+            self::TABLE,
+            [
+                'title' => $changelog->getTitle(),
+                'change_type' => $changelog->getChangeType(),
+                'version_string' => $changelog->getVersionString(),
+                'major_version' => $changelog->getMajorVersion(),
+                'issue_number' => $changelog->getIssueNumber(),
+                'tags' => $changelog->getTags(),
+                'content' => $content,
+            ],
+        );
+    }
 
     /**
      * Returns just the directory names like 10.4, 11.2, and 13.4.x
@@ -63,21 +89,6 @@ class ChangelogRepository implements LoggerAwareInterface
     public function getImportantFiles(string $version): array
     {
         return $this->getChangelogFiles('Important', $version);
-    }
-
-    /**
-     * Needed to convert rst files to Markdown
-     */
-    public function getAllOriginalTypo3ChangelogFiles(): array
-    {
-        return GeneralUtility::getAllFilesAndFoldersInPath(
-            [],
-            GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
-            'rst',
-            false,
-            2,
-            '(Howto.rst)',
-        );
     }
 
     private function getChangelogFiles(string $type, string $version): array
@@ -133,5 +144,17 @@ class ChangelogRepository implements LoggerAwareInterface
         }
 
         return array_unique($foundDirectories);
+    }
+
+    private function getQueryBuilder(): QueryBuilder
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $queryBuilder
+            ->getRestrictions()
+            ->removeAll()
+            ->add(GeneralUtility::makeInstance(DeletedRestriction::class))
+            ->add(GeneralUtility::makeInstance(HiddenRestriction::class));
+
+        return $queryBuilder;
     }
 }

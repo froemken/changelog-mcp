@@ -12,9 +12,27 @@ declare(strict_types=1);
 namespace StefanFroemken\ChangelogMcp\Service;
 
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class ChangelogService
 {
+    private const ORIGINAL_TYPO3_CHANGELOG_DIRECTORY = 'EXT:core/Documentation/Changelog/';
+
+    /**
+     * Needed to convert rst files to Markdown
+     */
+    public function getAllOriginalTypo3ChangelogFiles(): array
+    {
+        return GeneralUtility::getAllFilesAndFoldersInPath(
+            [],
+            GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
+            'rst',
+            false,
+            2,
+            '(Howto.rst)',
+        );
+    }
+
     public function getChangelog(string $absFile): ?Changelog
     {
         if (@is_file($absFile) === false || !is_readable($absFile)) {
@@ -29,11 +47,6 @@ class ChangelogService
         }
 
         return null;
-    }
-
-    public function getOutputDirectory(): string
-    {
-        return Environment::getVarPath() . '/prepared_changelogs/';
     }
 
     private function cleanUpChangelogContent(string $content): string
