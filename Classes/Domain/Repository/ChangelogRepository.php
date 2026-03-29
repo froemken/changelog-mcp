@@ -15,6 +15,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use StefanFroemken\ChangelogMcp\Service\Changelog;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -48,111 +49,91 @@ class ChangelogRepository implements LoggerAwareInterface
         );
     }
 
-    /**
-     * Truncates the changelog table.
-     */
     public function truncate(): void
     {
         $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
         $connection->truncate(self::TABLE);
     }
 
-    /**
-     * Returns just the directory names like 10.4, 11.2, and 13.4.x
-     */
-    public function getTypo3VersionDirectories(): array
+    public function getChangelogs(string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
     {
-        $directories = GeneralUtility::get_dirs(
-            GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
-        );
+        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from(self::TABLE);
 
-        if ($directories === null) {
-            $this->logger->error('Given changelog directory is empty');
-            $this->logger->error('Could not get directories from changelog directory');
-            return [];
+        $constraints = [];
+        $words = array_filter(explode(' ', $prompt));
+
+        if ($words !== []) {
+            $searchConditions = [];
+            foreach ($words as $word) {
+                $searchConditions[] = $queryBuilder->expr()->like(
+                    'title',
+                    $queryBuilder->createNamedParameter('%' . $word . '%'),
+                );
+                $searchConditions[] = $queryBuilder->expr()->like(
+                    'content',
+                    $queryBuilder->createNamedParameter('%' . $word . '%'),
+                );
+            }
+            $constraints[] = $queryBuilder->expr()->or(...$searchConditions);
         }
 
-        if (is_string($directories)) {
-            $this->logger->error('Could not get directories from changelog directory');
-            return [];
+        if ($typo3Version !== null) {
+            $constraints[] = $queryBuilder->expr()->eq('version_string', $queryBuilder->createNamedParameter($typo3Version));
         }
 
-        return $directories;
-    }
+        if ($changeType !== null) {
+            $constraints[] = $queryBuilder->expr()->eq('change_type', $queryBuilder->createNamedParameter($changeType));
+        }
 
-    public function getBreakingFiles(string $version): array
-    {
-        return $this->getChangelogFiles('Breaking', $version);
-    }
+        if (!empty($constraints)) {
+            $queryBuilder->where(...$constraints);
+        }
 
-    public function getDeprecationFiles(string $version): array
-    {
-        return $this->getChangelogFiles('Deprecation', $version);
-    }
+        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
 
-    public function getFeatureFiles(string $version): array
-    {
-        return $this->getChangelogFiles('Feature', $version);
-    }
+        // Scoring and sorting
+        foreach ($results as &$result) {
+            $score = 0;
+            $matchedWordsCount = 0;
 
-    public function getImportantFiles(string $version): array
-    {
-        return $this->getChangelogFiles('Important', $version);
-    }
-
-    private function getChangelogFiles(string $type, string $version): array
-    {
-        $changelogFiles = [];
-        foreach ($this->getChangelogDirectoriesForVersion($version) as $directory) {
-            foreach (GeneralUtility::getFilesInDir($directory, 'md') as $file) {
-                if (str_starts_with(basename($file), $type)) {
-                    $changelogFiles[] = $directory . '/' . $file;
+            foreach ($words as $word) {
+                if (stripos($result['title'], $word) !== false) {
+                    $score += 10; // Higher score for title matches
+                    $matchedWordsCount++;
+                } elseif (stripos($result['content'], $word) !== false) {
+                    $score += 1;
+                    $matchedWordsCount++;
                 }
             }
+            // Higher score for more matched words
+            $score += $matchedWordsCount * 5;
+            $result['score'] = $score;
         }
 
-        return $changelogFiles;
+        usort($results, function ($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+
+        return $results;
     }
 
-    /**
-     * Determines the appropriate changelog directory (or directories) based on the given TYPO3 version.
-     *
-     * @param string $version The TYPO3 version string (e.g., "11.5.23", "11.5", "11").
-     * @return string[] An array of absolute paths to the changelog directories.
-     */
-    private function getChangelogDirectoriesForVersion(string $version): array
+    public function getChangelogContentByUid(int $uid): ?string
     {
-        $availableDirectories = $this->getTypo3VersionDirectories();
-        $foundDirectories = [];
+        $queryBuilder = $this->getQueryBuilder();
+        $result = $queryBuilder
+            ->select('content')
+            ->from(self::TABLE)
+            ->where($queryBuilder->expr()->eq(
+                'uid',
+                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)),
+            )
+            ->executeQuery()
+            ->fetchAssociative();
 
-        $versionParts = GeneralUtility::intExplode('.', $version, true);
-        $majorMinorVersion = implode('.', array_slice($versionParts, 0, 2));
-        $majorVersion = (string)($versionParts[0] ?? '');
-
-        // Case 1: Version like "11.5.23" or "11.5" -> look for "11.5"
-        if (count($versionParts) >= 2) {
-            foreach ($availableDirectories as $availableDirectory) {
-                if ($availableDirectory === $majorMinorVersion) {
-                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(
-                        Environment::getVarPath() . '/prepared_changelogs/' . $availableDirectory,
-                    );
-                    break;
-                }
-            }
-        }
-
-        // Case 2: Version like "11" or if major.minor was not found, but a major version is given
-        if ($foundDirectories === [] && $majorVersion !== '') {
-            foreach ($availableDirectories as $availableDirectory) {
-                if (str_starts_with($availableDirectory, $majorVersion . '.')) {
-                    $foundDirectories[] = GeneralUtility::getFileAbsFileName(
-                        Environment::getVarPath() . '/prepared_changelogs/' . $availableDirectory,
-                    );
-                }
-            }
-        }
-
-        return array_unique($foundDirectories);
+        return $result['content'] ?? null;
     }
 
     private function getQueryBuilder(): QueryBuilder
