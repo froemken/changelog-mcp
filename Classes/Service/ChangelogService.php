@@ -29,7 +29,7 @@ class ChangelogService
             'rst',
             false,
             2,
-            '(Howto.rst)',
+            '(Howto.rst|Index.rst)',
         );
     }
 

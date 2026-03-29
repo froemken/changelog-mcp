@@ -49,6 +49,15 @@ class ChangelogRepository implements LoggerAwareInterface
     }
 
     /**
+     * Truncates the changelog table.
+     */
+    public function truncate(): void
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        $connection->truncate(self::TABLE);
+    }
+
+    /**
      * Returns just the directory names like 10.4, 11.2, and 13.4.x
      */
     public function getTypo3VersionDirectories(): array
