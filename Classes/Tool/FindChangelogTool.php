@@ -35,7 +35,7 @@ final class FindChangelogTool
      */
     #[McpTool(
         name: 'search_typo3_changelogs',
-        description: 'SEARCH TOOL: Find TYPO3 changelogs for new features, code examples, breaking changes, or missing/renamed classes (e.g. ReplaceFileController). Use this to research TYPO3 API changes and migration paths for versions 10 through 14.'
+        description: 'SEARCH TOOL: Find TYPO3 changelogs for new features, code examples, breaking changes, or missing/renamed classes (e.g. ReplaceFileController). Use this to research TYPO3 API changes and migration paths for versions 7 through 14.'
     )]
     public function searchChangelogs(
         #[Schema(description: 'The search term (e.g. "encryption", "ReplaceFileController", "TCA").')]
