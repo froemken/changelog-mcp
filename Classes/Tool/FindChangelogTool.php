@@ -103,7 +103,7 @@ final class FindChangelogTool
                 continue;
             }
 
-            $data = $this->getMetadata($query, $changelog->getContent(), $changelog->getAbsFile());
+            $data = $this->getMetadata($query, $changelog->getRstContent(), $changelog->getAbsFile());
 
             // Only include files that actually match the search
             //if ($data['score'] > 0) {
@@ -156,7 +156,7 @@ final class FindChangelogTool
             return "Error: Changelog file not found or not readable at '{$absFile}'.";
         }
 
-        return $changelog->getContent();
+        return $changelog->getRstContent();
     }
 
     private function getSearchScore(string $query, string $content): int

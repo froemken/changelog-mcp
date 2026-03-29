@@ -29,7 +29,6 @@ class PrepareChangelogCommand extends Command
     public function __construct(
         protected ChangelogRepository $changelogRepository,
         protected ChangelogService $changelogService,
-        protected ParserFactory $parserFactory,
     ) {
         parent::__construct();
     }
@@ -65,8 +64,6 @@ class PrepareChangelogCommand extends Command
         }
 
         foreach ($files as $absFile) {
-            $parser = $this->parserFactory->getParser();
-
             if ($isVerbose) {
                 $output->writeln(sprintf('Processing: <info>%s</info>', basename($absFile)));
             }
@@ -74,15 +71,11 @@ class PrepareChangelogCommand extends Command
             $changelog = $this->changelogService->getChangelog($absFile);
             if (!$changelog instanceof Changelog) {
                 $output->writeln(sprintf('Could not parse changelog file "%s"', $absFile));
-                $progressBar?->advance(); // Nullsafe operator applied
+                $progressBar?->advance();
                 continue;
             }
 
-            $renderedContent = $parser->parse($changelog->getContent())->render();
-            $this->changelogRepository->create(
-                $changelog,
-                $renderedContent,
-            );
+            $this->changelogRepository->create($changelog);
             $processedFilesCount++;
             $progressBar?->advance();
         }

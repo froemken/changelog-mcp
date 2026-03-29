@@ -11,11 +11,16 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Service;
 
+use StefanFroemken\ChangelogMcp\MarkDown\ParserFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class ChangelogService
+readonly class ChangelogService
 {
     private const ORIGINAL_TYPO3_CHANGELOG_DIRECTORY = 'EXT:core/Documentation/Changelog/';
+
+    public function __construct(
+        protected ParserFactory $parserFactory,
+    ) {}
 
     /**
      * Needed to convert rst files to Markdown
@@ -38,9 +43,15 @@ class ChangelogService
             return null;
         }
 
+        $parser = $this->parserFactory->getParser();
+
         if ($content = file_get_contents($absFile)) {
+            $rstContent = $this->cleanUpChangelogContent($content);
+            $mdContent = $parser->parse($this->cleanUpChangelogContent($content))->render();
+
             return new Changelog(
-                $this->cleanUpChangelogContent($content),
+                $rstContent,
+                $mdContent,
                 $absFile,
             );
         }

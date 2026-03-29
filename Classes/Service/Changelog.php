@@ -16,13 +16,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 readonly class Changelog
 {
     public function __construct(
-        private string $content,
+        private string $rstContent,
+        private string $mdContent,
         private string $absFile,
     ) {}
 
-    public function getContent(): string
+    public function getRstContent(): string
     {
-        return $this->content;
+        return $this->rstContent;
+    }
+
+    public function getMdContent(): string
+    {
+        return $this->mdContent;
     }
 
     public function getAbsFile(): string
@@ -94,7 +100,7 @@ readonly class Changelog
      */
     public function getTitle(): string
     {
-        $lines = explode("\n", $this->content);
+        $lines = explode("\n", $this->mdContent);
         $titleLine = '';
 
         foreach ($lines as $line) {

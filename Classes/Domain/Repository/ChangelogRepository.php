@@ -31,7 +31,7 @@ class ChangelogRepository implements LoggerAwareInterface
         private readonly ConnectionPool $connectionPool,
     ) {}
 
-    public function create(Changelog $changelog, string $content): void
+    public function create(Changelog $changelog): void
     {
         $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
         $connection->insert(
@@ -43,7 +43,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 'major_version' => $changelog->getMajorVersion(),
                 'issue_number' => $changelog->getIssueNumber(),
                 'tags' => $changelog->getTags(),
-                'content' => $content,
+                'content' => $changelog->getMdContent(),
             ],
         );
     }
