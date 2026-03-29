@@ -35,10 +35,10 @@ final class FindChangelogTool
      */
     #[McpTool(
         name: 'search_typo3_changelogs',
-        description: 'SEARCH TOOL: Use this to find TYPO3 changelog UIDs and code examples. Search by keyword (e.g. "encryption") to get the UID for the content tool.'
+        description: 'SEARCH TOOL: Use this to find what happened to missing TYPO3 classes, controllers, or functions. Essential for finding replacements of removed or renamed components in TYPO3 7, 8, 9, 10, 11, 12, 13, and 14.'
     )]
     public function searchChangelogs(
-        #[Schema(description: 'The search term, e.g. "encryption" or "TCA".')]
+        #[Schema(description: 'The search term, e.g. "ReplaceFileController" or "DataHandler".')]
         string $query,
 
         #[Schema(description: 'Optional TYPO3 version, e.g. "14" or "12.4".')]
