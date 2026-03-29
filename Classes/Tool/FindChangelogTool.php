@@ -31,83 +31,56 @@ final class FindChangelogTool
     }
 
     /**
-     * Finds TYPO3 upgrade instructions, deprecations, and breaking changes.
-     * * IMPORTANT: The query MUST include:
-     * 1. A version string prefixed with "TYPO3" (e.g., "TYPO3 12", "TYPO3 13.4").
-     * 2. At least one keyword: "breaking", "feature", "important", or "deprecated".
-     * * Without both a version and a keyword, the result will be empty.
-     * The AI should derive the version from project files (e.g., composer.json, AGENTS.md, GEMINI.md)
-     * or ask the user if it is missing.
-     *
-     * @param string $query Search terms including a version and mandatory keywords.
-     * @return string List of max 10 entries with absPath, search score, and 150-character abstract.
+     * Searches the TYPO3 changelog database for breaking changes, features, and deprecations.
      */
     #[McpTool(
         name: 'find_typo3_changelog',
-        description: 'Search for TYPO3 changelogs. REQUIRED: Must include "TYPO3 [version]" AND at least one keyword (breaking, feature, important, deprecated).'
+        description: 'Search for TYPO3 upgrade instructions, breaking changes, or features. Best used with a specific version and type.'
     )]
     public function listChangelogs(
         #[Schema(
-            description: 'Search query. REQUIRED: "TYPO3 [version]" AND keywords (breaking|feature|important|deprecated). Example: "TYPO3 12 breaking TCA"',
-            minLength: 10
+            description: 'The search term or topic (e.g., "TCA", "Fluid", "DataHandler").',
+            minLength: 2,
         )]
-        string $query = ''
+        string $query,
+
+        #[Schema(
+            description: 'The TYPO3 version. Supports major (e.g., "12") or specific versions (e.g., "12.4").',
+            pattern: '^\d+(\.\d+)*$',
+        )]
+        ?string $version = null,
+
+        #[Schema(
+            description: 'The category of the changelog entry.',
+            enum: ['breaking', 'feature', 'important', 'deprecated'],
+        )]
+        ?string $type = null
     ): string {
-        $originalQuery = strtolower($query);
-        $this->logger->info('Original Query: ' . $originalQuery);
+        $this->logger->info(sprintf(
+            'Executing find_typo3_changelog: [Query: %s] [Version: %s] [Type: %s]',
+            $query,
+            $version ?? 'any',
+            $type ?? 'any',
+        ));
 
-        $typo3Version = null;
-        if (preg_match('/typo3\s+(?P<version>\d+(\.\d+)?(\.\d+)?)/', $originalQuery, $matches)) {
-            $typo3Version = $matches['version'];
-            $query = str_replace($matches[0], '', $query); // Remove "typo3 X.Y" from the query
+        $searchResults = $this->changelogRepository->getChangelogs($query, $version, $type);
+
+        if (empty($searchResults)) {
+            return "No TYPO3 changelogs found matching your criteria ($query, $version, $type).";
         }
 
-        $changeType = null;
-        $changeTypes = ['breaking', 'feature', 'important', 'deprecated'];
-        foreach ($changeTypes as $type) {
-            if (str_contains($originalQuery, $type)) {
-                $changeType = $type;
-                $query = str_replace($type, '', $query);
-                break;
-            }
-        }
-
-        // The remaining part of the query is the prompt for the database search
-        $prompt = trim($query);
-
-        $this->logger->info(
-            sprintf(
-                'Searching with: TYPO3 Version=%s, Change Type=%s, Prompt=%s',
-                $typo3Version ?? 'N/A',
-                $changeType ?? 'N/A',
-                $prompt,
-            )
-        );
-
-        $searchResults = $this->changelogRepository->getChangelogs($prompt, $typo3Version, $changeType);
-
-        if ($searchResults === []) {
-            $this->logger->info("No matching changelogs found for the query: '$originalQuery'.");
-            return "No matching changelogs found for your query.";
-        }
-
-        // Limit the results to the top 10 to save tokens and keep the AI focused
-        $topResults = array_slice($searchResults, 0, 10);
-
-        $outputStrings = [];
-        foreach ($topResults as $result) {
+        $output = [];
+        foreach (array_slice($searchResults, 0, 10) as $result) {
             $abstract = $result['content'];
             if (mb_strlen($abstract) > 150) {
                 $abstract = mb_substr($abstract, 0, 150);
                 $lastSpace = mb_strrpos($abstract, ' ');
-                if ($lastSpace !== false) {
-                    $abstract = mb_substr($abstract, 0, $lastSpace);
-                }
+                $abstract = ($lastSpace !== false) ? mb_substr($abstract, 0, $lastSpace) : $abstract;
                 $abstract .= '...';
             }
 
-            $outputStrings[] = sprintf(
-                "UID: %d\nTitle: %s\nVersion: %s\nChange Type: %s\nRelevance Score: %d\nAbstract: %s",
+            $output[] = sprintf(
+                "UID: %d | %s (v%s)\nType: %s | Score: %d\nAbstract: %s",
                 $result['uid'],
                 $result['title'],
                 $result['version_string'],
@@ -117,24 +90,27 @@ final class FindChangelogTool
             );
         }
 
-        return "I found the following relevant changelogs, sorted by search relevance:\n\n" . implode("\n\n---\n\n", $outputStrings);
+        return "Relevant TYPO3 changelogs:\n\n" . implode("\n\n---\n\n", $output);
     }
 
     /**
-     * Retrieves the content of a specific TYPO3 changelog file.
-     *
-     * @param int $uid The UID of the changelog entry.
-     * @return string The content of the changelog entry, or an error message if not found.
+     * Retrieves the full content of a specific TYPO3 changelog file.
      */
     #[McpTool(
         name: 'get_typo3_changelog_content',
-        description: 'Retrieves the full content of a specific TYPO3 changelog entry given its UID. Use this tool after finding a relevant changelog entry with find_typo3_changelog.'
+        description: 'Returns the full content of a TYPO3 changelog entry. Use the UID obtained from find_typo3_changelog.'
     )]
-    public function getChangelogContentTool(int $uid): string
-    {
+    public function getChangelogContentTool(
+        #[Schema(description: 'The unique identifier (UID) of the changelog entry.')]
+        int $uid,
+    ): string {
+        $this->logger->info(sprintf('Fetching full content for TYPO3 changelog UID: %d', $uid));
+
         $content = $this->changelogRepository->getChangelogContentByUid($uid);
+
         if ($content === null) {
-            return "Error: Changelog entry with UID '{$uid}' not found.";
+            $this->logger->error(sprintf('Changelog UID %d not found in database.', $uid));
+            return "Error: Changelog entry with UID {$uid} could not be found.";
         }
 
         return $content;
