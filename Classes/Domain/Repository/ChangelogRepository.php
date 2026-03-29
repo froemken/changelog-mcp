@@ -55,6 +55,14 @@ class ChangelogRepository implements LoggerAwareInterface
         $connection->truncate(self::TABLE);
     }
 
+    /**
+     * Retrieves changelogs based on search term, version, and type.
+     *
+     * @param string $prompt The search term(s)
+     * @param string|null $typo3Version The version (e.g., "14", "12.4", or "11.5.1")
+     * @param string|null $changeType The category (e.g., "breaking", "feature")
+     * @return array The scored and sorted search results
+     */
     public function getChangelogs(string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
     {
         $queryBuilder = $this->getQueryBuilder();
@@ -65,57 +73,72 @@ class ChangelogRepository implements LoggerAwareInterface
         $constraints = [];
         $words = array_filter(explode(' ', $prompt));
 
+        // 1. Fulltext search: Combine title and content matches with OR
         if ($words !== []) {
             $searchConditions = [];
             foreach ($words as $word) {
-                $searchConditions[] = $queryBuilder->expr()->like(
-                    'title',
-                    $queryBuilder->createNamedParameter('%' . $word . '%'),
-                );
-                $searchConditions[] = $queryBuilder->expr()->like(
-                    'content',
-                    $queryBuilder->createNamedParameter('%' . $word . '%'),
-                );
+                $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
+                $searchConditions[] = $queryBuilder->expr()->like('title', $wordParam);
+                $searchConditions[] = $queryBuilder->expr()->like('content', $wordParam);
             }
             $constraints[] = $queryBuilder->expr()->or(...$searchConditions);
         }
 
-        if ($typo3Version !== null) {
-            $constraints[] = $queryBuilder->expr()->eq('version_string', $queryBuilder->createNamedParameter($typo3Version));
+        // 2. Intelligent version filtering
+        if ($typo3Version !== null && $typo3Version !== '') {
+            if (!str_contains($typo3Version, '.')) {
+                // Only major version provided (e.g., "14")
+                $constraints[] = $queryBuilder->expr()->eq(
+                    'major_version',
+                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT)
+                );
+            } else {
+                // Specific version provided (e.g., "11.5.23" or "12.4")
+                // We normalize to Major.Minor to ensure we find all related entries
+                $parts = explode('.', $typo3Version);
+                $normalizedVersion = $parts[0] . '.' . $parts[1];
+
+                // Use LIKE to match "12.4" against "12.4.1", "12.4.2", etc.
+                $constraints[] = $queryBuilder->expr()->like(
+                    'version_string',
+                    $queryBuilder->createNamedParameter($normalizedVersion . '%')
+                );
+            }
         }
 
-        if ($changeType !== null) {
-            $constraints[] = $queryBuilder->expr()->eq('change_type', $queryBuilder->createNamedParameter($changeType));
+        // 3. Category filter
+        if ($changeType !== null && $changeType !== '') {
+            $constraints[] = $queryBuilder->expr()->eq(
+                'change_type',
+                $queryBuilder->createNamedParameter($changeType)
+            );
         }
 
-        if (!empty($constraints)) {
-            $queryBuilder->where(...$constraints);
+        // Apply all constraints with AND
+        if ($constraints !== []) {
+            $queryBuilder->where($queryBuilder->expr()->and(...$constraints));
         }
 
         $results = $queryBuilder->executeQuery()->fetchAllAssociative();
 
-        // Scoring and sorting
+        // 4. Scoring and sorting
         foreach ($results as &$result) {
             $score = 0;
-            $matchedWordsCount = 0;
-
             foreach ($words as $word) {
+                // Title matches are significantly more important for AI relevance
                 if (stripos($result['title'], $word) !== false) {
-                    $score += 10; // Higher score for title matches
-                    $matchedWordsCount++;
-                } elseif (stripos($result['content'], $word) !== false) {
-                    $score += 1;
-                    $matchedWordsCount++;
+                    $score += 20;
+                }
+                // Content matches add context depth
+                if (stripos($result['content'], $word) !== false) {
+                    $score += 5;
                 }
             }
-            // Higher score for more matched words
-            $score += $matchedWordsCount * 5;
             $result['score'] = $score;
         }
 
-        usort($results, function ($a, $b) {
-            return $b['score'] <=> $a['score'];
-        });
+        // Sort by relevance score descending
+        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
 
         return $results;
     }
