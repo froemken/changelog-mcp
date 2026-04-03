@@ -25,8 +25,6 @@ final class FindChangelogTool
     public function __construct(
         private readonly ChangelogRepository $changelogRepository,
     ) {
-        // This class is called by a foreign composer package, which does not have access to TYPO3
-        // dependencies and instantiates classes via "new", so LoggerAwareTrait is also not working.
         $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
     }
 
@@ -34,14 +32,14 @@ final class FindChangelogTool
      * Search the TYPO3 changelog database for new features.
      */
     #[McpTool(
-        name: 'find_typo3_feature_changelogs',
-        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for new features. Use this to discover new functionalities in TYPO3 versions, e.g., for "What\'s new in TYPO3 14" or "TYPO3 14.1 features".'
+        name: 'search_typo3_features',
+        description: 'Provides access to TYPO3 feature changelogs. Use this to identify new APIs, Core functionalities, and site handling improvements introduced in specific TYPO3 versions.'
     )]
     public function findFeatureChangelogs(
-        #[Schema(description: 'Optional search term (e.g. "new API", "site handling").')]
+        #[Schema(description: 'Optional search term. Leave empty to list all features for a version.')]
         string $query = '',
 
-        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        #[Schema(description: 'Optional TYPO3 version (e.g. "13", "12.4"). Leave empty to search all versions.')]
         string $version = ''
     ): array {
         $this->logger->info(sprintf('Find Feature Changelogs: [Query: %s] [Version: %s]', $query, $version));
@@ -57,22 +55,7 @@ final class FindChangelogTool
             ];
         }
 
-        $output = [];
-        foreach (array_slice($searchResults, 0, 10) as $result) {
-            $output[] = sprintf(
-                "UID: %d | %s (v%s)\nAbstract: %s",
-                $result['uid'],
-                $result['title'],
-                $result['version_string'],
-                mb_strimwidth($result['content'], 0, 400, '...')
-            );
-        }
-
-        return [
-            'content' => [
-                ['type' => 'text', 'text' => "Found feature UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
-            ],
-        ];
+        return $this->formatSearchResults($searchResults, 'feature');
     }
 
     /**
@@ -80,13 +63,13 @@ final class FindChangelogTool
      */
     #[McpTool(
         name: 'search_typo3_deprecations',
-        description: 'Queries the TYPO3 database for deprecated PHP classes, methods, and configurations. Returns migration paths and replacement suggestions for specific TYPO3 versions.'
+        description: 'Queries the TYPO3 database for deprecated PHP classes, methods, and configurations. Returns mandatory migration paths and replacement suggestions for specific versions.'
     )]
     public function searchDeprecationChangelogs(
-        #[Schema(description: 'Optional search term (e.g. "Extbase query", "Fluid ViewHelper").')]
+        #[Schema(description: 'Optional search term (e.g. "Fluid ViewHelper"). Leave empty to list all.')]
         string $query = '',
 
-        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        #[Schema(description: 'Optional TYPO3 version (e.g. "11"). Leave empty to search all versions.')]
         string $version = ''
     ): array {
         $this->logger->info(sprintf('Find Deprecation Changelogs: [Query: %s] [Version: %s]', $query, $version));
@@ -102,22 +85,7 @@ final class FindChangelogTool
             ];
         }
 
-        $output = [];
-        foreach (array_slice($searchResults, 0, 10) as $result) {
-            $output[] = sprintf(
-                "UID: %d | %s (v%s)\nAbstract: %s",
-                $result['uid'],
-                $result['title'],
-                $result['version_string'],
-                mb_strimwidth($result['content'], 0, 400, '...')
-            );
-        }
-
-        return [
-            'content' => [
-                ['type' => 'text', 'text' => "Found deprecation UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
-            ],
-        ];
+        return $this->formatSearchResults($searchResults, 'deprecation');
     }
 
     /**
@@ -128,10 +96,10 @@ final class FindChangelogTool
         description: 'Queries the TYPO3 database for breaking changes, including removed APIs, deleted files, and backward-incompatible logic changes.'
     )]
     public function searchBreakingChangelogs(
-        #[Schema(description: 'Optional search term (e.g. "removed class", "method signature change", "file deleted").')]
+        #[Schema(description: 'Optional search term. Leave empty to list all breaking changes for a version.')]
         string $query = '',
 
-        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        #[Schema(description: 'Optional TYPO3 version (e.g. "14"). Leave empty to search all versions.')]
         string $version = ''
     ): array {
         $this->logger->info(sprintf('Find Breaking Changelogs: [Query: %s] [Version: %s]', $query, $version));
@@ -139,7 +107,6 @@ final class FindChangelogTool
         $versionParam = $version === '' ? null : $version;
         $queryParam = $query === '' ? null : $query;
 
-        // Assuming 'breaking' is a valid type for getChangelogs in ChangelogRepository
         $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, 'breaking');
 
         if (empty($searchResults)) {
@@ -148,30 +115,15 @@ final class FindChangelogTool
             ];
         }
 
-        $output = [];
-        foreach (array_slice($searchResults, 0, 10) as $result) {
-            $output[] = sprintf(
-                "UID: %d | %s (v%s)\nAbstract: %s",
-                $result['uid'],
-                $result['title'],
-                $result['version_string'],
-                mb_strimwidth($result['content'], 0, 400, '...')
-            );
-        }
-
-        return [
-            'content' => [
-                ['type' => 'text', 'text' => "Found breaking change UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
-            ],
-        ];
+        return $this->formatSearchResults($searchResults, 'breaking change');
     }
 
     /**
      * Retrieves the full content of a specific TYPO3 changelog file.
      */
     #[McpTool(
-        name: 'get_typo3_changelog_content',
-        description: 'CONTENT TOOL: Retrieves the full technical documentation and official PHP code examples for a specific TYPO3 change. Use this to provide the user with exact implementation details found in the changelog.',
+        name: 'get_typo3_changelog_details',
+        description: 'Retrieves the full technical documentation, upgrade instructions, and PHP code examples for a specific TYPO3 change UID.',
     )]
     public function getChangelogContentTool(
         #[Schema(description: 'The UID of the changelog entry.')]
@@ -184,22 +136,38 @@ final class FindChangelogTool
         if ($content === null) {
             $this->logger->error(sprintf('Changelog UID %d not found in database.', $uid));
             return [
-                'content' => [
-                    [
-                        'type' => 'text',
-                        'text' => "Error: Changelog entry with UID {$uid} could not be found.",
-                    ],
-                ],
+                'content' => [['type' => 'text', 'text' => "Error: Changelog entry with UID {$uid} could not be found."]],
                 'isError' => true,
             ];
+        }
+
+        return [
+            'content' => [['type' => 'text', 'text' => $content]],
+        ];
+    }
+
+    /**
+     * Helper to centralize formatting and keep the KI focused on the next step.
+     */
+    private function formatSearchResults(array $searchResults, string $typeLabel): array
+    {
+        $output = [];
+        foreach (array_slice($searchResults, 0, 10) as $result) {
+            $output[] = sprintf(
+                "UID: %d | %s (v%s)\nAbstract: %s",
+                $result['uid'],
+                $result['title'],
+                $result['version_string'],
+                mb_strimwidth($result['content'], 0, 400, '...')
+            );
         }
 
         return [
             'content' => [
                 [
                     'type' => 'text',
-                    'text' => $content,
-                ],
+                    'text' => "Found {$typeLabel} entries. To see the full implementation or migration path, call get_typo3_changelog_details(uid) with the desired UID:\n\n" . implode("\n\n---\n\n", $output)
+                ]
             ],
         ];
     }
