@@ -31,33 +31,29 @@ final class FindChangelogTool
     }
 
     /**
-     * Search the TYPO3 changelog database for specific topics.
+     * Search the TYPO3 changelog database for new features.
      */
     #[McpTool(
-        name: 'search_typo3_changelogs',
-        description: 'SEARCH TOOL: Find TYPO3 changelogs for new features, code examples, breaking changes, or missing/renamed classes (e.g. ReplaceFileController). Use this to research TYPO3 API changes and migration paths for versions 7 through 14.'
+        name: 'find_typo3_feature_changelogs',
+        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for new features. Use this to discover new functionalities in TYPO3 versions, e.g., for "What\'s new in TYPO3 14" or "TYPO3 14.1 features".'
     )]
-    public function searchChangelogs(
-        #[Schema(description: 'The search term (e.g. "encryption", "ReplaceFileController", "TCA").')]
-        string $query,
+    public function findFeatureChangelogs(
+        #[Schema(description: 'Optional search term (e.g. "new API", "site handling").')]
+        string $query = '',
 
-        #[Schema(description: 'Optional TYPO3 version, e.g. "14" or "12.4".')]
-        string $version = '',
-
-        #[Schema(description: 'Optional category, e.g. "breaking" or "feature".')]
-        string $type = ''
+        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        string $version = ''
     ): array {
-        $this->logger->info(sprintf('Search: [Query: %s] [Version: %s]', $query, $version));
+        $this->logger->info(sprintf('Find Feature Changelogs: [Query: %s] [Version: %s]', $query, $version));
 
-        // Wir wandeln leere Strings intern wieder in null um für das Repository
         $versionParam = $version === '' ? null : $version;
-        $typeParam = $type === '' ? null : $type;
+        $queryParam = $query === '' ? null : $query;
 
-        $searchResults = $this->changelogRepository->getChangelogs($query, $versionParam, $typeParam);
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, 'feature');
 
         if (empty($searchResults)) {
             return [
-                'content' => [['type' => 'text', 'text' => "No results for '$query'."]],
+                'content' => [['type' => 'text', 'text' => "No feature changelogs found for '$query' in version '$version'."]],
             ];
         }
 
@@ -74,7 +70,98 @@ final class FindChangelogTool
 
         return [
             'content' => [
-                ['type' => 'text', 'text' => "Found UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
+                ['type' => 'text', 'text' => "Found feature UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
+            ],
+        ];
+    }
+
+    /**
+     * Search the TYPO3 changelog database for deprecations and migration paths.
+     */
+    #[McpTool(
+        name: 'find_typo3_deprecation_changelogs',
+        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for deprecations. Use this to identify deprecated code snippets and find their migration paths to newer TYPO3 versions, e.g., for "TYPO3 12 deprecations" or "migrate Extbase query".'
+    )]
+    public function findDeprecationChangelogs(
+        #[Schema(description: 'Optional search term (e.g. "Extbase query", "Fluid ViewHelper").')]
+        string $query = '',
+
+        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        string $version = ''
+    ): array {
+        $this->logger->info(sprintf('Find Deprecation Changelogs: [Query: %s] [Version: %s]', $query, $version));
+
+        $versionParam = $version === '' ? null : $version;
+        $queryParam = $query === '' ? null : $query;
+
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, 'deprecation');
+
+        if (empty($searchResults)) {
+            return [
+                'content' => [['type' => 'text', 'text' => "No deprecation changelogs found for '$query' in version '$version'."]],
+            ];
+        }
+
+        $output = [];
+        foreach (array_slice($searchResults, 0, 10) as $result) {
+            $output[] = sprintf(
+                "UID: %d | %s (v%s)\nAbstract: %s",
+                $result['uid'],
+                $result['title'],
+                $result['version_string'],
+                mb_strimwidth($result['content'], 0, 150, '...')
+            );
+        }
+
+        return [
+            'content' => [
+                ['type' => 'text', 'text' => "Found deprecation UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
+            ],
+        ];
+    }
+
+    /**
+     * Search the TYPO3 changelog database for breaking changes.
+     */
+    #[McpTool(
+        name: 'find_typo3_breaking_changelogs',
+        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for breaking changes. Use this to identify removed classes, methods, arguments, files, or functionalities in TYPO3 versions, e.g., for "TYPO3 12 breaking changes" or "removed API".'
+    )]
+    public function findBreakingChangelogs(
+        #[Schema(description: 'Optional search term (e.g. "removed class", "method signature change", "file deleted").')]
+        string $query = '',
+
+        #[Schema(description: 'Optional TYPO3 version, e.g. "14", "14.1", or "13". Defaults to an empty string to search all versions.')]
+        string $version = ''
+    ): array {
+        $this->logger->info(sprintf('Find Breaking Changelogs: [Query: %s] [Version: %s]', $query, $version));
+
+        $versionParam = $version === '' ? null : $version;
+        $queryParam = $query === '' ? null : $query;
+
+        // Assuming 'breaking' is a valid type for getChangelogs in ChangelogRepository
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, 'breaking');
+
+        if (empty($searchResults)) {
+            return [
+                'content' => [['type' => 'text', 'text' => "No breaking changelogs found for '$query' in version '$version'."]],
+            ];
+        }
+
+        $output = [];
+        foreach (array_slice($searchResults, 0, 10) as $result) {
+            $output[] = sprintf(
+                "UID: %d | %s (v%s)\nAbstract: %s",
+                $result['uid'],
+                $result['title'],
+                $result['version_string'],
+                mb_strimwidth($result['content'], 0, 150, '...')
+            );
+        }
+
+        return [
+            'content' => [
+                ['type' => 'text', 'text' => "Found breaking change UIDs. Use get_typo3_changelog_content(uid) now:\n\n" . implode("\n\n---\n\n", $output)]
             ],
         ];
     }
