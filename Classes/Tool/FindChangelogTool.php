@@ -64,7 +64,7 @@ final class FindChangelogTool
                 $result['uid'],
                 $result['title'],
                 $result['version_string'],
-                mb_strimwidth($result['content'], 0, 150, '...')
+                mb_strimwidth($result['content'], 0, 400, '...')
             );
         }
 
@@ -79,10 +79,10 @@ final class FindChangelogTool
      * Search the TYPO3 changelog database for deprecations and migration paths.
      */
     #[McpTool(
-        name: 'find_typo3_deprecation_changelogs',
-        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for deprecations. Use this to identify deprecated code snippets and find their migration paths to newer TYPO3 versions, e.g., for "TYPO3 12 deprecations" or "migrate Extbase query".'
+        name: 'search_typo3_deprecations',
+        description: 'Queries the TYPO3 database for deprecated PHP classes, methods, and configurations. Returns migration paths and replacement suggestions for specific TYPO3 versions.'
     )]
-    public function findDeprecationChangelogs(
+    public function searchDeprecationChangelogs(
         #[Schema(description: 'Optional search term (e.g. "Extbase query", "Fluid ViewHelper").')]
         string $query = '',
 
@@ -109,7 +109,7 @@ final class FindChangelogTool
                 $result['uid'],
                 $result['title'],
                 $result['version_string'],
-                mb_strimwidth($result['content'], 0, 150, '...')
+                mb_strimwidth($result['content'], 0, 400, '...')
             );
         }
 
@@ -124,10 +124,10 @@ final class FindChangelogTool
      * Search the TYPO3 changelog database for breaking changes.
      */
     #[McpTool(
-        name: 'find_typo3_breaking_changelogs',
-        description: 'SEARCH TOOL: Find TYPO3 changelogs specifically for breaking changes. Use this to identify removed classes, methods, arguments, files, or functionalities in TYPO3 versions, e.g., for "TYPO3 12 breaking changes" or "removed API".'
+        name: 'search_typo3_breaking_changes',
+        description: 'Queries the TYPO3 database for breaking changes, including removed APIs, deleted files, and backward-incompatible logic changes.'
     )]
-    public function findBreakingChangelogs(
+    public function searchBreakingChangelogs(
         #[Schema(description: 'Optional search term (e.g. "removed class", "method signature change", "file deleted").')]
         string $query = '',
 
@@ -155,7 +155,7 @@ final class FindChangelogTool
                 $result['uid'],
                 $result['title'],
                 $result['version_string'],
-                mb_strimwidth($result['content'], 0, 150, '...')
+                mb_strimwidth($result['content'], 0, 400, '...')
             );
         }
 
