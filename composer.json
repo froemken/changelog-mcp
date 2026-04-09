@@ -16,9 +16,21 @@
 		"doctrine/rst-parser": "^0.5",
 		"mcp/sdk": "^0.4"
 	},
+	"require-dev": {
+		"ergebnis/composer-normalize": "^2.44",
+		"phpstan/phpstan": "^2.1.25",
+		"phpunit/phpunit": "^11.2.5",
+		"typo3/coding-standards": "^0.8",
+		"typo3/testing-framework": "^9.0.1"
+	},
 	"autoload": {
 		"psr-4": {
 			"StefanFroemken\\ChangelogMcp\\": "Classes/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"StefanFroemken\\ChangelogMcp\\Tests\\": "Tests/"
 		}
 	},
 	"config": {
