@@ -25,11 +25,19 @@ use TYPO3\CMS\Reactions\Reaction\ReactionInterface;
  * This reaction listens for MCP request.
  * It searches prepared TYPO3 changelog files.
  * And returns more context-related information.
+ *
+ * This class must not be marked as readonly to remain compatible with PHP 8.2.
+ * The TYPO3 Reactions extension registers all ReactionInterface implementations
+ * with setLazy(true) via registerForAutoconfiguration in its Services.php.
+ * PHP 8.2 does not support generating lazy proxies by inheriting from readonly
+ * classes, causing a fatal error during container compilation.
+ *
+ * @noinspection PhpClassCanBeReadonlyInspection
  */
-readonly class ChangelogMcpReaction implements ReactionInterface
+class ChangelogMcpReaction implements ReactionInterface
 {
     public function __construct(
-        private LoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {}
 
     public static function getType(): string
