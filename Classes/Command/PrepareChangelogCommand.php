@@ -23,6 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'mcp:changelog:prepare',
+    description: 'Prepares and stores TYPO3 changelog entries in the database.',
 )]
 class PrepareChangelogCommand extends Command
 {
@@ -35,9 +36,7 @@ class PrepareChangelogCommand extends Command
 
     protected function configure(): void
     {
-        $this
-            ->setDescription('Prepares and stores TYPO3 changelog entries in the database.')
-            ->setHelp('This command reads all original TYPO3 changelog RST files, converts them to Markdown, extracts relevant information, and stores them in the database for faster access by the MCP server.');
+        $this->setHelp('This command reads all original TYPO3 changelog RST files, converts them to Markdown, extracts relevant information, and stores them in the database for faster access by the MCP server.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
