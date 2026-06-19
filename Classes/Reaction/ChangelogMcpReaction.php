@@ -13,6 +13,8 @@ namespace StefanFroemken\ChangelogMcp\Reaction;
 
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Server as McpServer;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -81,6 +83,10 @@ class ChangelogMcpReaction implements ReactionInterface
         $transport = new McpServer\Transport\StreamableHttpTransport(
             request: $request,
             logger: $this->logger,
+            middleware: [
+                new CorsMiddleware(),
+                new ProtocolVersionMiddleware(),
+            ],
         );
 
         return $server->run($transport);
