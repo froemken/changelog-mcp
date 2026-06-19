@@ -57,21 +57,20 @@ class ChangelogRepository implements LoggerAwareInterface
 
     /**
      * Retrieves changelogs based on search term, version, and type.
-     *
-     * @param string $prompt The search term(s)
+     * @param string|null $prompt The search term(s)
      * @param string|null $typo3Version The version (e.g., "14", "12.4", or "11.5.1")
      * @param string|null $changeType The category (e.g., "breaking", "feature")
-     * @return array The scored and sorted search results
+     * @return array<int, array<string, mixed>> The scored and sorted search results
      */
-    public function getChangelogs(string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
+    public function getChangelogs(?string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
     {
         $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder
-            ->select('*')
-            ->from(self::TABLE);
-
         $constraints = [];
-        $words = array_filter(explode(' ', $prompt));
+        $words = [];
+
+        if ($prompt !== null && $prompt !== '') {
+            $words = array_filter(explode(' ', $prompt));
+        }
 
         // 1. Fulltext search: Combine title and content matches with OR
         if ($words !== []) {
@@ -119,28 +118,64 @@ class ChangelogRepository implements LoggerAwareInterface
             $queryBuilder->where($queryBuilder->expr()->and(...$constraints));
         }
 
-        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
+        // 4. Scoring in SQL
+        $scoreParts = [];
+        $isFeatureIntent = false;
+        $isDeprecationIntent = false;
+        $isBreakingIntent = false;
 
-        // 4. Scoring and sorting
-        foreach ($results as &$result) {
-            $score = 0;
-            foreach ($words as $word) {
-                // Title matches are significantly more important for AI relevance
-                if (stripos($result['title'], $word) !== false) {
-                    $score += 20;
-                }
-                // Content matches add context depth
-                if (stripos($result['content'], $word) !== false) {
-                    $score += 5;
+        if ($prompt !== null && $prompt !== '') {
+            $promptLower = mb_strtolower($prompt);
+            $featureKeywords = ['implement', 'new', 'add', 'create', 'introduce', 'feature', 'introduction'];
+            $deprecationKeywords = ['upgrade', 'deprecated', 'deprecation', 'migrate', 'migration', 'replace', 'replacement', 'obsolete'];
+            $breakingKeywords = ['removed', 'removal', 'delete', 'deleted', 'breaking', 'broken', 'remove'];
+
+            foreach ($featureKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isFeatureIntent = true;
+                    break;
                 }
             }
-            $result['score'] = $score;
+            foreach ($deprecationKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isDeprecationIntent = true;
+                    break;
+                }
+            }
+            foreach ($breakingKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isBreakingIntent = true;
+                    break;
+                }
+            }
         }
 
-        // Sort by relevance score descending
-        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
+        foreach ($words as $word) {
+            $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
+            $scoreParts[] = 'CASE WHEN title LIKE ' . $wordParam . ' THEN 20 ELSE 0 END';
+            $scoreParts[] = 'CASE WHEN content LIKE ' . $wordParam . ' THEN 5 ELSE 0 END';
+        }
 
-        return $results;
+        if ($isFeatureIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Feature' THEN 50 ELSE 0 END";
+        }
+        if ($isDeprecationIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Deprecation' THEN 50 ELSE 0 END";
+        }
+        if ($isBreakingIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Breaking' THEN 50 ELSE 0 END";
+        }
+
+        $scoreExpression = $scoreParts !== [] ? '(' . implode(' + ', $scoreParts) . ')' : '0';
+
+        $queryBuilder
+            ->select('*')
+            ->addSelectLiteral($scoreExpression . ' AS score')
+            ->from(self::TABLE)
+            ->orderBy('score', 'DESC')
+            ->setMaxResults(50);
+
+        return $queryBuilder->executeQuery()->fetchAllAssociative();
     }
 
     public function getChangelogContentByUid(int $uid): ?string
