@@ -14,6 +14,7 @@ namespace StefanFroemken\ChangelogMcp\Command;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Server;
 use Mcp\Server\Transport\StdioTransport;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,11 +22,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 #[AsCommand(
-    name: 'changelog:mcp:start',
+    name: 'mcp:server:start',
     description: 'Starts the MCP server for TYPO3 Changelog via STDIO'
 )]
 class McpServerCommand extends Command
 {
+    public function __construct(
+        private readonly ContainerInterface $container,
+    ) {
+        parent::__construct();
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Important: STDIO transport uses STDIN/STDOUT.
@@ -35,6 +42,7 @@ class McpServerCommand extends Command
             ->setServerInfo('TYPO3 Changelog MCP', '1.0.0')
             // Set the protocol version to be compatible with PhpStorm MCP integration
             ->setProtocolVersion(ProtocolVersion::V2024_11_05)
+            ->setContainer($this->container)
             ->setDiscovery(
                 basePath: GeneralUtility::getFileAbsFileName('EXT:changelog_mcp/Classes/'),
                 scanDirs: ['Tool'],
