@@ -18,15 +18,21 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\EmbeddedResource;
 use Mcp\Schema\Content\TextContent;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
 use StefanFroemken\ChangelogMcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final readonly class FindChangelogTool
 {
+    private LoggerInterface $logger;
+
     public function __construct(
         private ChangelogRepository $changelogRepository,
-        private LoggerInterface $logger,
-    ) {}
+    ) {
+        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
+    }
 
     /**
      * Search tool for TYPO3 core changelogs, features, deprecations, breaking changes, and importants.
