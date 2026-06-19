@@ -13,8 +13,8 @@ namespace StefanFroemken\ChangelogMcp\Tool;
 
 enum ChangelogEnum: string
 {
-    case BUGFIX = 'bugfix';
-    case DEPRECATED = 'deprecated';
+    case BREAKING = 'breaking';
+    case DEPRECATION = 'deprecation';
     case FEATURE = 'feature';
     case IMPORTANT = 'important';
 }
