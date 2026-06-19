@@ -36,7 +36,10 @@ class PrepareChangelogCommand extends Command
 
     protected function configure(): void
     {
-        $this->setHelp('This command reads all original TYPO3 changelog RST files, converts them to Markdown, extracts relevant information, and stores them in the database for faster access by the MCP server.');
+        $this->setHelp(
+            'This command reads all original TYPO3 changelog RST files, converts them to Markdown, '
+            . ' extracts relevant information, and stores them in the database for faster access by the MCP server.'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
