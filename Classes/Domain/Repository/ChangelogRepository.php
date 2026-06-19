@@ -69,7 +69,38 @@ class ChangelogRepository implements LoggerAwareInterface
         $words = [];
 
         if ($prompt !== null && $prompt !== '') {
-            $words = array_filter(explode(' ', $prompt));
+            $rawWords = array_filter(explode(' ', $prompt));
+            $stopwords = [
+                'how', 'to', 'the', 'a', 'an', 'of', 'in', 'and', 'is', 'for', 'with', 'on', 'as', 'by', 'at', 'it', 'from',
+                'what', 'why', 'where', 'when', 'who', 'which', 'do', 'does', 'did', 'have', 'has', 'had', 'are', 'was', 'were',
+                'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create'
+            ];
+            $nonSelective = ['typo3', 'cms'];
+
+            $cleanedWords = [];
+            foreach ($rawWords as $word) {
+                $wordLower = mb_strtolower($word);
+                if (!in_array($wordLower, $stopwords, true)) {
+                    $cleanedWords[] = $word;
+                }
+            }
+
+            $finalWords = [];
+            foreach ($cleanedWords as $word) {
+                $wordLower = mb_strtolower($word);
+                if (in_array($wordLower, $nonSelective, true)) {
+                    continue;
+                }
+                $finalWords[] = $word;
+            }
+
+            if ($finalWords !== []) {
+                $words = $finalWords;
+            } elseif ($cleanedWords !== []) {
+                $words = $cleanedWords;
+            } else {
+                $words = $rawWords;
+            }
         }
 
         // 1. Fulltext search: Combine title and content matches with OR
@@ -175,7 +206,27 @@ class ChangelogRepository implements LoggerAwareInterface
             ->orderBy('score', 'DESC')
             ->setMaxResults(50);
 
-        return $queryBuilder->executeQuery()->fetchAllAssociative();
+        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
+
+        $maxScore = 0;
+        foreach ($results as $result) {
+            $score = (int)($result['score'] ?? 0);
+            if ($score > $maxScore) {
+                $maxScore = $score;
+            }
+        }
+
+        if ($maxScore >= 20) {
+            $finalResults = [];
+            foreach ($results as $result) {
+                if ((int)($result['score'] ?? 0) >= 20) {
+                    $finalResults[] = $result;
+                }
+            }
+            return array_slice($finalResults, 0, 25);
+        }
+
+        return array_slice($results, 0, 10);
     }
 
     public function getChangelogContentByUid(int $uid): ?string
