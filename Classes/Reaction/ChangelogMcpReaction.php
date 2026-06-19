@@ -12,13 +12,12 @@ declare(strict_types=1);
 namespace StefanFroemken\ChangelogMcp\Reaction;
 
 use Mcp\Schema\Enum\ProtocolVersion;
-use Mcp\Server as McpServer;
-use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
-use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
+use Mcp\Server;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Reactions\Model\ReactionInstruction;
 use TYPO3\CMS\Reactions\Reaction\ReactionInterface;
@@ -57,11 +56,14 @@ class ChangelogMcpReaction implements ReactionInterface
         return 'module-install-environment';
     }
 
-    public function react(ServerRequestInterface $request, array $payload, ReactionInstruction $reaction): ResponseInterface
-    {
+    public function react(
+        ServerRequestInterface $request,
+        array $payload,
+        ReactionInstruction $reaction,
+    ): ResponseInterface {
         GeneralUtility::mkdir_deep(Environment::getVarPath() . '/changelog_mcp_sessions');
 
-        $server = McpServer::builder()
+        $server = Server::builder()
             ->setServerInfo('TYPO3 Changelog MCP Server', '0.0.1')
             // Set the protocol version to be compatible with PhpStorm MCP integration
             ->setProtocolVersion(ProtocolVersion::V2024_11_05)
@@ -70,7 +72,7 @@ class ChangelogMcpReaction implements ReactionInterface
                 scanDirs: ['Tool'],
             )
             ->setSession(
-                new McpServer\Session\FileSessionStore(
+                new Server\Session\FileSessionStore(
                     Environment::getVarPath() . '/changelog_mcp_sessions',
                 ),
             )
@@ -80,13 +82,35 @@ class ChangelogMcpReaction implements ReactionInterface
         // This is a common issue with PSR-7 streams that might have been read by other middlewares.
         $request->getBody()->rewind();
 
-        $transport = new McpServer\Transport\StreamableHttpTransport(
+        /** @var NormalizedParams $normalizedParams */
+        $normalizedParams = $request->getAttribute('normalizedParams');
+        $detectedHost = $normalizedParams->getHttpHost();
+
+        $middleware = [
+            new Server\Transport\Http\Middleware\ProtocolVersionMiddleware(),
+            new Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware([
+                $detectedHost,
+                'localhost',
+                '127.0.0.1',
+            ]),
+            new Server\Transport\Http\Middleware\CorsMiddleware(
+                allowedOrigins: ['*'],
+                allowedMethods: ['GET', 'POST', 'OPTIONS'],
+                allowedHeaders: [
+                    'Accept',
+                    'Authorization',
+                    'Content-Type',
+                    'Last-Event-ID',
+                    Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
+                    Server\Transport\StreamableHttpTransport::SESSION_HEADER,
+                ]
+            ),
+        ];
+
+        $transport = new Server\Transport\StreamableHttpTransport(
             request: $request,
             logger: $this->logger,
-            middleware: [
-                new CorsMiddleware(),
-                new ProtocolVersionMiddleware(),
-            ],
+            middleware: $middleware,
         );
 
         return $server->run($transport);

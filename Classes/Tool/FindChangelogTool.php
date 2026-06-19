@@ -45,7 +45,7 @@ final readonly class FindChangelogTool
         $versionParam = $version === '' ? null : $version;
         $queryParam = $query === '' ? null : $query;
 
-        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type?->value);
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type);
 
         $text = 'I found ' . count($searchResults) . ' matching changelogs:' . PHP_EOL . PHP_EOL;
         foreach ($searchResults as $searchResult) {
