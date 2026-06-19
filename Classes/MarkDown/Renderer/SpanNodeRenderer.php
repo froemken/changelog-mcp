@@ -90,7 +90,13 @@ final class SpanNodeRenderer extends BaseSpanNodeRenderer
             $text = '';
         }
 
-        if ($url === null) {
+        $attributes = $reference->getAttributes();
+        $role = $attributes['role'] ?? '';
+
+        if ($url === null || $url === '') {
+            if ($role !== '' && $role !== 'issue') {
+                return $this->literal(trim($text));
+            }
             $url = '';
         }
 
