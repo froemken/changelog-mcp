@@ -35,12 +35,12 @@ final class Title extends Directive
         ?Node $node,
         string $variable,
         string $data,
-        array $options
+        array $options,
     ): void {
         $document = $parser->getDocument();
 
         $document->addHeaderNode(
-            $parser->getNodeFactory()->createRawNode('\title{' . $data . '}')
+            $parser->getNodeFactory()->createRawNode('\title{' . $data . '}'),
         );
 
         if ($node === null) {

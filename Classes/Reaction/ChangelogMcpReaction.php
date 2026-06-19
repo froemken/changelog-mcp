@@ -67,8 +67,10 @@ class ChangelogMcpReaction implements ReactionInterface
                 basePath: GeneralUtility::getFileAbsFileName('EXT:changelog_mcp/Classes/'),
                 scanDirs: ['Tool'],
             )
-            ->setSession(new McpServer\Session\FileSessionStore(
-                Environment::getVarPath() . '/changelog_mcp_sessions')
+            ->setSession(
+                new McpServer\Session\FileSessionStore(
+                    Environment::getVarPath() . '/changelog_mcp_sessions',
+                ),
             )
             ->build();
 

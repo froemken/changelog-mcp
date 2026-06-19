@@ -14,35 +14,37 @@
 		"typo3/cms-core": "^14.0",
 		"typo3/cms-reactions": "^14.0",
 		"doctrine/rst-parser": "^0.5",
-		"mcp/sdk": "^0.5"
+		"mcp/sdk": "^0.6"
 	},
 	"require-dev": {
 		"ergebnis/composer-normalize": "^2.44",
 		"phpstan/phpstan": "^2.1.25",
-		"phpunit/phpunit": "^11.2.5",
+		"ssch/typo3-rector": "^3.6",
 		"typo3/coding-standards": "^0.8",
-		"typo3/testing-framework": "^9.0.1"
+		"typo3/testing-framework": "^9.5"
 	},
 	"autoload": {
 		"psr-4": {
 			"StefanFroemken\\ChangelogMcp\\": "Classes/"
 		}
 	},
-	"autoload-dev": {
-		"psr-4": {
-			"StefanFroemken\\ChangelogMcp\\Tests\\": "Tests/"
-		}
-	},
 	"config": {
 		"allow-plugins": {
+			"ergebnis/composer-normalize": true,
 			"typo3/class-alias-loader": true,
 			"typo3/cms-composer-installers": true
 		},
-		"sort-packages": true
+		"bin-dir": ".Build/bin",
+		"vendor-dir": ".Build/vendor"
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "changelog_mcp"
+			"Package": {
+				"providesPackages": {}
+			},
+			"extension-key": "changelog_mcp",
+			"version": "0.0.1",
+			"web-dir": ".Build/public"
 		}
 	}
 }

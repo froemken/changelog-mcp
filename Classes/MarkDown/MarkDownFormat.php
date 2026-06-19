@@ -13,10 +13,10 @@ namespace StefanFroemken\ChangelogMcp\MarkDown;
 
 use Doctrine\RST\Directives\Directive;
 use Doctrine\RST\Formats\Format;
+use Doctrine\RST\Nodes;
 use Doctrine\RST\Renderers\CallableNodeRendererFactory;
 use Doctrine\RST\Renderers\NodeRendererFactory;
 use Doctrine\RST\Templates\TemplateRenderer;
-use Doctrine\RST\Nodes;
 use StefanFroemken\ChangelogMcp\MarkDown;
 
 class MarkDownFormat implements Format
@@ -30,7 +30,7 @@ class MarkDownFormat implements Format
         $this->templateRenderer = $templateRenderer;
     }
 
-    public function getFileExtension() : string
+    public function getFileExtension(): string
     {
         return self::FORMAT;
     }
@@ -38,7 +38,7 @@ class MarkDownFormat implements Format
     /**
      * @return Directive[]
      */
-    public function getDirectives() : array
+    public function getDirectives(): array
     {
         return [
             new MarkDown\Directive\Attention(),
@@ -59,7 +59,7 @@ class MarkDownFormat implements Format
     /**
      * @return NodeRendererFactory[]
      */
-    public function getNodeRendererFactories() : array
+    public function getNodeRendererFactories(): array
     {
         return [
             Nodes\AnchorNode::class => new CallableNodeRendererFactory(
@@ -68,7 +68,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\CodeNode::class => new CallableNodeRendererFactory(
                 function (Nodes\CodeNode $node): MarkDown\Renderer\CodeNodeRenderer {
@@ -76,7 +76,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\DocumentNode::class => new CallableNodeRendererFactory(
                 function (Nodes\DocumentNode $node): MarkDown\Renderer\DocumentNodeRenderer {
@@ -84,7 +84,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\ImageNode::class => new CallableNodeRendererFactory(
                 function (Nodes\ImageNode $node): MarkDown\Renderer\ImageNodeRenderer {
@@ -92,7 +92,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\ListNode::class => new CallableNodeRendererFactory(
                 function (Nodes\ListNode $node): MarkDown\Renderer\ListNodeRenderer {
@@ -100,7 +100,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\ParagraphNode::class => new CallableNodeRendererFactory(
                 function (Nodes\ParagraphNode $node): MarkDown\Renderer\ParagraphNodeRenderer {
@@ -108,7 +108,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\QuoteNode::class => new CallableNodeRendererFactory(
                 function (Nodes\QuoteNode $node): MarkDown\Renderer\QuoteNodeRenderer {
@@ -116,14 +116,14 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\SeparatorNode::class => new CallableNodeRendererFactory(
                 function (Nodes\SeparatorNode $node): MarkDown\Renderer\SeparatorNodeRenderer {
                     return new MarkDown\Renderer\SeparatorNodeRenderer(
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\SpanNode::class => new CallableNodeRendererFactory(
                 function (Nodes\SpanNode $node): MarkDown\Renderer\SpanNodeRenderer {
@@ -132,14 +132,14 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
             Nodes\TableNode::class => new CallableNodeRendererFactory(
                 function (Nodes\TableNode $node): MarkDown\Renderer\TableNodeRenderer {
                     return new MarkDown\Renderer\TableNodeRenderer(
                         $node,
                     );
-                }
+                },
             ),
             Nodes\TitleNode::class => new CallableNodeRendererFactory(
                 function (Nodes\TitleNode $node): MarkDown\Renderer\TitleNodeRenderer {
@@ -147,7 +147,7 @@ class MarkDownFormat implements Format
                         $node,
                         $this->templateRenderer,
                     );
-                }
+                },
             ),
         ];
     }

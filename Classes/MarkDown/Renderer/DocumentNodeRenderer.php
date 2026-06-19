@@ -20,7 +20,7 @@ final readonly class DocumentNodeRenderer implements NodeRenderer
 {
     public function __construct(
         private DocumentNode $document,
-        private TemplateRenderer $templateRenderer
+        private TemplateRenderer $templateRenderer,
     ) {}
 
     public function render(): string

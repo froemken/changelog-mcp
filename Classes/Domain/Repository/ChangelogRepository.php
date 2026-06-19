@@ -14,7 +14,6 @@ namespace StefanFroemken\ChangelogMcp\Domain\Repository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use StefanFroemken\ChangelogMcp\Service\Changelog;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -57,21 +56,51 @@ class ChangelogRepository implements LoggerAwareInterface
 
     /**
      * Retrieves changelogs based on search term, version, and type.
-     *
-     * @param string $prompt The search term(s)
+     * @param string|null $prompt The search term(s)
      * @param string|null $typo3Version The version (e.g., "14", "12.4", or "11.5.1")
      * @param string|null $changeType The category (e.g., "breaking", "feature")
-     * @return array The scored and sorted search results
+     * @return array<int, array<string, mixed>> The scored and sorted search results
      */
-    public function getChangelogs(string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
+    public function getChangelogs(?string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
     {
         $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder
-            ->select('*')
-            ->from(self::TABLE);
-
         $constraints = [];
-        $words = array_filter(explode(' ', $prompt));
+        $words = [];
+
+        if ($prompt !== null && $prompt !== '') {
+            $rawWords = array_filter(explode(' ', $prompt));
+            $stopwords = [
+                'how', 'to', 'the', 'a', 'an', 'of', 'in', 'and', 'is', 'for', 'with', 'on', 'as', 'by', 'at', 'it', 'from',
+                'what', 'why', 'where', 'when', 'who', 'which', 'do', 'does', 'did', 'have', 'has', 'had', 'are', 'was', 'were',
+                'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create',
+            ];
+            $nonSelective = ['typo3', 'cms'];
+
+            $cleanedWords = [];
+            foreach ($rawWords as $word) {
+                $wordLower = mb_strtolower($word);
+                if (!in_array($wordLower, $stopwords, true)) {
+                    $cleanedWords[] = $word;
+                }
+            }
+
+            $finalWords = [];
+            foreach ($cleanedWords as $word) {
+                $wordLower = mb_strtolower($word);
+                if (in_array($wordLower, $nonSelective, true)) {
+                    continue;
+                }
+                $finalWords[] = $word;
+            }
+
+            if ($finalWords !== []) {
+                $words = $finalWords;
+            } elseif ($cleanedWords !== []) {
+                $words = $cleanedWords;
+            } else {
+                $words = $rawWords;
+            }
+        }
 
         // 1. Fulltext search: Combine title and content matches with OR
         if ($words !== []) {
@@ -90,7 +119,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 // Only major version provided (e.g., "14")
                 $constraints[] = $queryBuilder->expr()->eq(
                     'major_version',
-                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT)
+                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT),
                 );
             } else {
                 // Specific version provided (e.g., "11.5.23" or "12.4")
@@ -101,7 +130,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 // Use LIKE to match "12.4" against "12.4.1", "12.4.2", etc.
                 $constraints[] = $queryBuilder->expr()->like(
                     'version_string',
-                    $queryBuilder->createNamedParameter($normalizedVersion . '%')
+                    $queryBuilder->createNamedParameter($normalizedVersion . '%'),
                 );
             }
         }
@@ -110,7 +139,7 @@ class ChangelogRepository implements LoggerAwareInterface
         if ($changeType !== null && $changeType !== '') {
             $constraints[] = $queryBuilder->expr()->eq(
                 'change_type',
-                $queryBuilder->createNamedParameter($changeType)
+                $queryBuilder->createNamedParameter($changeType),
             );
         }
 
@@ -119,28 +148,84 @@ class ChangelogRepository implements LoggerAwareInterface
             $queryBuilder->where($queryBuilder->expr()->and(...$constraints));
         }
 
-        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
+        // 4. Scoring in SQL
+        $scoreParts = [];
+        $isFeatureIntent = false;
+        $isDeprecationIntent = false;
+        $isBreakingIntent = false;
 
-        // 4. Scoring and sorting
-        foreach ($results as &$result) {
-            $score = 0;
-            foreach ($words as $word) {
-                // Title matches are significantly more important for AI relevance
-                if (stripos($result['title'], $word) !== false) {
-                    $score += 20;
-                }
-                // Content matches add context depth
-                if (stripos($result['content'], $word) !== false) {
-                    $score += 5;
+        if ($prompt !== null && $prompt !== '') {
+            $promptLower = mb_strtolower($prompt);
+            $featureKeywords = ['implement', 'new', 'add', 'create', 'introduce', 'feature', 'introduction'];
+            $deprecationKeywords = ['upgrade', 'deprecated', 'deprecation', 'migrate', 'migration', 'replace', 'replacement', 'obsolete'];
+            $breakingKeywords = ['removed', 'removal', 'delete', 'deleted', 'breaking', 'broken', 'remove'];
+
+            foreach ($featureKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isFeatureIntent = true;
+                    break;
                 }
             }
-            $result['score'] = $score;
+            foreach ($deprecationKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isDeprecationIntent = true;
+                    break;
+                }
+            }
+            foreach ($breakingKeywords as $keyword) {
+                if (str_contains($promptLower, $keyword)) {
+                    $isBreakingIntent = true;
+                    break;
+                }
+            }
         }
 
-        // Sort by relevance score descending
-        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
+        foreach ($words as $word) {
+            $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
+            $scoreParts[] = 'CASE WHEN title LIKE ' . $wordParam . ' THEN 20 ELSE 0 END';
+            $scoreParts[] = 'CASE WHEN content LIKE ' . $wordParam . ' THEN 5 ELSE 0 END';
+        }
 
-        return $results;
+        if ($isFeatureIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Feature' THEN 50 ELSE 0 END";
+        }
+        if ($isDeprecationIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Deprecation' THEN 50 ELSE 0 END";
+        }
+        if ($isBreakingIntent) {
+            $scoreParts[] = "CASE WHEN change_type = 'Breaking' THEN 50 ELSE 0 END";
+        }
+
+        $scoreExpression = $scoreParts !== [] ? '(' . implode(' + ', $scoreParts) . ')' : '0';
+
+        $queryBuilder
+            ->select('*')
+            ->addSelectLiteral($scoreExpression . ' AS score')
+            ->from(self::TABLE)
+            ->orderBy('score', 'DESC')
+            ->setMaxResults(50);
+
+        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
+
+        $maxScore = 0;
+        foreach ($results as $result) {
+            $score = (int)($result['score'] ?? 0);
+            if ($score > $maxScore) {
+                $maxScore = $score;
+            }
+        }
+
+        if ($maxScore >= 20) {
+            $finalResults = [];
+            foreach ($results as $result) {
+                if ((int)($result['score'] ?? 0) >= 20) {
+                    $finalResults[] = $result;
+                }
+            }
+            return array_slice($finalResults, 0, 25);
+        }
+
+        return array_slice($results, 0, 10);
     }
 
     public function getChangelogContentByUid(int $uid): ?string
@@ -149,9 +234,11 @@ class ChangelogRepository implements LoggerAwareInterface
         $result = $queryBuilder
             ->select('content')
             ->from(self::TABLE)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)),
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT),
+                ),
             )
             ->executeQuery()
             ->fetchAssociative();

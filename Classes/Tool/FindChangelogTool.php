@@ -20,49 +20,52 @@ use Mcp\Schema\Content\TextContent;
 use Psr\Log\LoggerInterface;
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
 use StefanFroemken\ChangelogMcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
-use TYPO3\CMS\Core\Log\LogManager;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-final class FindChangelogTool
+final readonly class FindChangelogTool
 {
-    private LoggerInterface $logger;
-
     public function __construct(
-        private readonly ChangelogRepository $changelogRepository,
-    ) {
-        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-    }
+        private ChangelogRepository $changelogRepository,
+        private LoggerInterface $logger,
+    ) {}
 
     /**
-     * Searches for TYPO3 changelogs, features, and deprecations.
+     * Search tool for TYPO3 core changelogs, features, deprecations, breaking changes, and importants.
+     * This tool provides direct access to the official TYPO3 Core changelog documentation for API modifications, removals, upgrades, and migrations.
+     * You MUST call this tool as the first step before performing any web search or relying on pre-trained knowledge
+     * whenever the user asks about TYPO3 core APIs, deprecations, features, breaking changes, or importants.
      */
     #[McpTool(name: 'search_changelogs')]
     public function search(
-        #[Schema(description: 'Keywords for full-text search. If empty, all entries for the version are returned.')]
-        string $query = '',
-
-        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)]
-        #[Schema(description: 'The TYPO3 version (e.g., "12.4"). Leave empty to search across all versions.')]
-        ?string $version = null,
-
-        #[CompletionProvider(enum: ChangelogEnum::class)]
-        #[Schema(description: 'Filter entries by their specific TYPO3 change type.')]
-        ?ChangelogEnum $type = null,
+        #[Schema(description: 'Search keywords (e.g. class name, method name, property, hook name, config key) to match against the TYPO3 changelog database. If empty, returns all entries.')] string $query = '',
+        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version (e.g. "10", "11.5", "12.4", "13", "14"). If empty, searches across all versions. Highly recommended.')] ?string $version = null,
+        #[CompletionProvider(enum: ChangelogEnum::class)] #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?ChangelogEnum $type = null,
     ): array {
         $this->logger->info(sprintf('Search for Changelogs: [Query: %s] [Version: %s]', $query, $version));
 
         $versionParam = $version === '' ? null : $version;
         $queryParam = $query === '' ? null : $query;
 
-        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type->value);
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type?->value);
+
+        $text = 'I found ' . count($searchResults) . ' matching changelogs:' . PHP_EOL . PHP_EOL;
+        foreach ($searchResults as $searchResult) {
+            $text .= sprintf(
+                '- [%s] %s (URI: typo3://changelog/%d, Type: %s, Version: %s)' . PHP_EOL,
+                $searchResult['change_type'],
+                $searchResult['title'],
+                $searchResult['uid'],
+                $searchResult['change_type'],
+                $searchResult['version_string'],
+            );
+        }
 
         $content = [
-            new TextContent('I found ' . count($searchResults) . ' matching changelogs:')
+            new TextContent($text),
         ];
 
         foreach ($searchResults as $searchResult) {
             $content[] = EmbeddedResource::fromText(
-                uri: "typo3://changelog/" . $searchResult['uid'],
+                uri: 'typo3://changelog/' . $searchResult['uid'],
                 text: $searchResult['title'],
                 mimeType: 'text/markdown',
             );
