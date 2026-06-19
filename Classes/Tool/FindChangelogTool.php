@@ -36,16 +36,9 @@ final readonly class FindChangelogTool
      */
     #[McpTool(name: 'search_changelogs')]
     public function search(
-        #[Schema(description: 'Search keywords (e.g. class name, method name, property, hook name, config key) to match against the TYPO3 changelog database. If empty, returns all entries.')]
-        string $query = '',
-
-        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)]
-        #[Schema(description: 'Target TYPO3 version (e.g. "10", "11.5", "12.4", "13", "14"). If empty, searches across all versions. Highly recommended.')]
-        ?string $version = null,
-
-        #[CompletionProvider(enum: ChangelogEnum::class)]
-        #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')]
-        ?ChangelogEnum $type = null,
+        #[Schema(description: 'Search keywords (e.g. class name, method name, property, hook name, config key) to match against the TYPO3 changelog database. If empty, returns all entries.')] string $query = '',
+        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version (e.g. "10", "11.5", "12.4", "13", "14"). If empty, searches across all versions. Highly recommended.')] ?string $version = null,
+        #[CompletionProvider(enum: ChangelogEnum::class)] #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?ChangelogEnum $type = null,
     ): array {
         $this->logger->info(sprintf('Search for Changelogs: [Query: %s] [Version: %s]', $query, $version));
 
@@ -62,17 +55,17 @@ final readonly class FindChangelogTool
                 $searchResult['title'],
                 $searchResult['uid'],
                 $searchResult['change_type'],
-                $searchResult['version_string']
+                $searchResult['version_string'],
             );
         }
 
         $content = [
-            new TextContent($text)
+            new TextContent($text),
         ];
 
         foreach ($searchResults as $searchResult) {
             $content[] = EmbeddedResource::fromText(
-                uri: "typo3://changelog/" . $searchResult['uid'],
+                uri: 'typo3://changelog/' . $searchResult['uid'],
                 text: $searchResult['title'],
                 mimeType: 'text/markdown',
             );

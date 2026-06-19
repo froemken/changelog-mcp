@@ -35,6 +35,6 @@ final class Sidebar extends Directive
         ?Node $node,
         string $variable,
         string $data,
-        array $options
+        array $options,
     ): void {}
 }

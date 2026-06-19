@@ -24,7 +24,7 @@ final readonly class TitleNodeRenderer implements NodeRenderer
 
     public function render(): string
     {
-        $levelIndent = match($this->titleNode->getLevel()) {
+        $levelIndent = match ($this->titleNode->getLevel()) {
             1 => '#',
             2 => '##',
             3 => '###',

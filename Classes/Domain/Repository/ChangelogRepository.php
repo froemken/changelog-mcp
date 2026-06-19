@@ -14,7 +14,6 @@ namespace StefanFroemken\ChangelogMcp\Domain\Repository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use StefanFroemken\ChangelogMcp\Service\Changelog;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -73,7 +72,7 @@ class ChangelogRepository implements LoggerAwareInterface
             $stopwords = [
                 'how', 'to', 'the', 'a', 'an', 'of', 'in', 'and', 'is', 'for', 'with', 'on', 'as', 'by', 'at', 'it', 'from',
                 'what', 'why', 'where', 'when', 'who', 'which', 'do', 'does', 'did', 'have', 'has', 'had', 'are', 'was', 'were',
-                'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create'
+                'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create',
             ];
             $nonSelective = ['typo3', 'cms'];
 
@@ -120,7 +119,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 // Only major version provided (e.g., "14")
                 $constraints[] = $queryBuilder->expr()->eq(
                     'major_version',
-                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT)
+                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT),
                 );
             } else {
                 // Specific version provided (e.g., "11.5.23" or "12.4")
@@ -131,7 +130,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 // Use LIKE to match "12.4" against "12.4.1", "12.4.2", etc.
                 $constraints[] = $queryBuilder->expr()->like(
                     'version_string',
-                    $queryBuilder->createNamedParameter($normalizedVersion . '%')
+                    $queryBuilder->createNamedParameter($normalizedVersion . '%'),
                 );
             }
         }
@@ -140,7 +139,7 @@ class ChangelogRepository implements LoggerAwareInterface
         if ($changeType !== null && $changeType !== '') {
             $constraints[] = $queryBuilder->expr()->eq(
                 'change_type',
-                $queryBuilder->createNamedParameter($changeType)
+                $queryBuilder->createNamedParameter($changeType),
             );
         }
 
@@ -235,9 +234,11 @@ class ChangelogRepository implements LoggerAwareInterface
         $result = $queryBuilder
             ->select('content')
             ->from(self::TABLE)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)),
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT),
+                ),
             )
             ->executeQuery()
             ->fetchAssociative();

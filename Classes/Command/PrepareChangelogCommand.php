@@ -12,12 +12,11 @@ declare(strict_types=1);
 namespace StefanFroemken\ChangelogMcp\Command;
 
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
-use StefanFroemken\ChangelogMcp\MarkDown\ParserFactory;
 use StefanFroemken\ChangelogMcp\Service\Changelog;
 use StefanFroemken\ChangelogMcp\Service\ChangelogService;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -38,7 +37,7 @@ class PrepareChangelogCommand extends Command
     {
         $this->setHelp(
             'This command reads all original TYPO3 changelog RST files, converts them to Markdown, '
-            . 'extracts relevant information, and stores them in the database for faster access by the MCP server.'
+            . 'extracts relevant information, and stores them in the database for faster access by the MCP server.',
         );
     }
 

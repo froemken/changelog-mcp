@@ -17,16 +17,12 @@ use Doctrine\RST\References\ResolvedReference;
 use Doctrine\RST\Renderers\SpanNodeRenderer as BaseSpanNodeRenderer;
 use Doctrine\RST\Templates\TemplateRenderer;
 
-use function is_string;
-use function substr;
-use function trim;
-
 final class SpanNodeRenderer extends BaseSpanNodeRenderer
 {
     public function __construct(
         Environment $environment,
         SpanNode $span,
-        private readonly TemplateRenderer $templateRenderer
+        private readonly TemplateRenderer $templateRenderer,
     ) {
         parent::__construct($environment, $span);
     }
@@ -79,7 +75,7 @@ final class SpanNodeRenderer extends BaseSpanNodeRenderer
     /** @param mixed[] $value */
     public function reference(ResolvedReference $reference, array $value): string
     {
-        $text = (bool) $value['text'] ? $value['text'] : $reference->getTitle();
+        $text = (bool)$value['text'] ? $value['text'] : $reference->getTitle();
         $url  = $reference->getUrl();
 
         if ($value['anchor'] !== '') {
@@ -95,11 +91,11 @@ final class SpanNodeRenderer extends BaseSpanNodeRenderer
 
         if ($url === null || $url === '') {
             if ($role !== '' && $role !== 'issue') {
-                return $this->literal(trim($text));
+                return $this->literal(\trim($text));
             }
             $url = '';
         }
 
-        return $this->link($url, trim($text));
+        return $this->link($url, \trim($text));
     }
 }

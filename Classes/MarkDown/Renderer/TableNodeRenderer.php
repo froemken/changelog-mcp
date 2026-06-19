@@ -14,10 +14,6 @@ namespace StefanFroemken\ChangelogMcp\MarkDown\Renderer;
 use Doctrine\RST\Nodes\TableNode;
 use Doctrine\RST\Renderers\NodeRenderer;
 
-use function count;
-use function implode;
-use function max;
-
 final readonly class TableNodeRenderer implements NodeRenderer
 {
     public function __construct(
@@ -31,7 +27,7 @@ final readonly class TableNodeRenderer implements NodeRenderer
         $rows = [];
         foreach ($this->tableNode->getData() as $row) {
             $rowMarkDown = '';
-            $cols = max($cols, count($row->getColumns()));
+            $cols = \max($cols, \count($row->getColumns()));
 
             foreach ($row->getColumns() as $n => $col) {
                 $rowMarkDown .= '| ' . $col->render();
@@ -41,6 +37,6 @@ final readonly class TableNodeRenderer implements NodeRenderer
             $rows[]  = $rowMarkDown;
         }
 
-        return implode("\n", $rows);
+        return \implode("\n", $rows);
     }
 }
