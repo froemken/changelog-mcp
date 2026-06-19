@@ -52,10 +52,22 @@ final readonly class FindChangelogTool
         $versionParam = $version === '' ? null : $version;
         $queryParam = $query === '' ? null : $query;
 
-        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type->value);
+        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type?->value);
+
+        $text = 'I found ' . count($searchResults) . ' matching changelogs:' . PHP_EOL . PHP_EOL;
+        foreach ($searchResults as $searchResult) {
+            $text .= sprintf(
+                '- [%s] %s (URI: typo3://changelog/%d, Type: %s, Version: %s)' . PHP_EOL,
+                $searchResult['change_type'],
+                $searchResult['title'],
+                $searchResult['uid'],
+                $searchResult['change_type'],
+                $searchResult['version_string']
+            );
+        }
 
         $content = [
-            new TextContent('I found ' . count($searchResults) . ' matching changelogs:')
+            new TextContent($text)
         ];
 
         foreach ($searchResults as $searchResult) {
