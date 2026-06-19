@@ -22,7 +22,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'mcp:changelog:prepare',
+    name: 'changelog:mcp:prepare',
     description: 'Prepares and stores TYPO3 changelog entries in the database.',
 )]
 class PrepareChangelogCommand extends Command

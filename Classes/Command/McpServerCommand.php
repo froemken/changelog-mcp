@@ -21,7 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 #[AsCommand(
-    name: 'mcp:server:start',
+    name: 'changelog:mcp:start',
     description: 'Starts the MCP server for TYPO3 Changelog via STDIO'
 )]
 class McpServerCommand extends Command
