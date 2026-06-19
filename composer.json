@@ -34,11 +34,17 @@
 			"typo3/class-alias-loader": true,
 			"typo3/cms-composer-installers": true
 		},
-		"sort-packages": true
+		"bin-dir": ".Build/bin",
+		"vendor-dir": ".Build/vendor"
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "changelog_mcp"
+			"Package": {
+				"providesPackages": {}
+			},
+			"extension-key": "changelog_mcp",
+			"version": "0.0.1",
+			"web-dir": ".Build/public"
 		}
 	}
 }
