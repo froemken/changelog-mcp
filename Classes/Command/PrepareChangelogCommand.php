@@ -38,7 +38,7 @@ class PrepareChangelogCommand extends Command
     {
         $this->setHelp(
             'This command reads all original TYPO3 changelog RST files, converts them to Markdown, '
-            . ' extracts relevant information, and stores them in the database for faster access by the MCP server.'
+            . 'extracts relevant information, and stores them in the database for faster access by the MCP server.'
         );
     }
 
