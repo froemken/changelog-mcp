@@ -21,11 +21,11 @@ use Psr\Log\LoggerInterface;
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
 use StefanFroemken\ChangelogMcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
 
-final class FindChangelogTool
+final readonly class FindChangelogTool
 {
     public function __construct(
-        private readonly ChangelogRepository $changelogRepository,
-        private readonly LoggerInterface $logger,
+        private ChangelogRepository $changelogRepository,
+        private LoggerInterface $logger,
     ) {}
 
     /**
