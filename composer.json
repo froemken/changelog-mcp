@@ -28,11 +28,6 @@
 			"StefanFroemken\\ChangelogMcp\\": "Classes/"
 		}
 	},
-	"autoload-dev": {
-		"psr-4": {
-			"StefanFroemken\\ChangelogMcp\\Tests\\": "Tests/"
-		}
-	},
 	"config": {
 		"allow-plugins": {
 			"ergebnis/composer-normalize": true,

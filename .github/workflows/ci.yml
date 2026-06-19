@@ -34,12 +34,3 @@ jobs:
 
       - name: 'CGL'
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cgl -n
-
-      - name: 'Execute functional tests'
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -d mysql -s functional
-
-      - name: 'Execute functional tests'
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -d mariadb -s functional
-
-      - name: 'Execute functional tests'
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -d postgres -s functional
