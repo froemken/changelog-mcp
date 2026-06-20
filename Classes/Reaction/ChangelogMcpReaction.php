@@ -65,6 +65,7 @@ class ChangelogMcpReaction implements ReactionInterface
 
         $server = Server::builder()
             ->setServerInfo('TYPO3 Changelog MCP Server', '0.0.1')
+            ->setContainer(GeneralUtility::getContainer())
             // Set the protocol version to be compatible with PhpStorm MCP integration
             ->setProtocolVersion(ProtocolVersion::V2024_11_05)
             ->setDiscovery(
