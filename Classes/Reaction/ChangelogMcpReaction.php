@@ -16,8 +16,10 @@ use Mcp\Server;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Uid\Uuid;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Http\NormalizedParams;
+use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Reactions\Model\ReactionInstruction;
 use TYPO3\CMS\Reactions\Reaction\ReactionInterface;
@@ -62,6 +64,57 @@ class ChangelogMcpReaction implements ReactionInterface
         ReactionInstruction $reaction,
     ): ResponseInterface {
         GeneralUtility::mkdir_deep(Environment::getVarPath() . '/changelog_mcp_sessions');
+
+        if ($request->getMethod() === 'GET') {
+            $sessionId = Uuid::v4()->toRfc4122();
+            $sessionDir = Environment::getVarPath() . '/changelog_mcp_sessions';
+            GeneralUtility::mkdir_deep($sessionDir);
+            $sessionPath = $sessionDir . '/' . $sessionId;
+            file_put_contents($sessionPath, '{}');
+
+            header('Content-Type: text/event-stream');
+            header('Cache-Control: no-cache');
+            header('Connection: keep-alive');
+            header('X-Accel-Buffering: no');
+            header('Content-Encoding: none');
+
+            while (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            ob_implicit_flush(true);
+
+            /** @var NormalizedParams $normalizedParams */
+            $normalizedParams = $request->getAttribute('normalizedParams');
+            $requestUrl = $normalizedParams->getRequestUrl();
+            $endpointUrl = $requestUrl . '?sessionId=' . $sessionId;
+
+            echo "event: endpoint\n";
+            echo "data: " . $endpointUrl . "\n\n";
+            flush();
+
+            $startTime = time();
+            while (time() - $startTime < 25) {
+                if (connection_aborted()) {
+                    break;
+                }
+                if (is_file($sessionPath)) {
+                    $content = file_get_contents($sessionPath);
+                    $data = json_decode($content, true);
+                    $queue = $data['_mcp']['outgoing_queue'] ?? [];
+                    if (!empty($queue)) {
+                        foreach ($queue as $item) {
+                            echo "event: message\n";
+                            echo "data: " . $item['message'] . "\n\n";
+                            flush();
+                        }
+                        $data['_mcp']['outgoing_queue'] = [];
+                        file_put_contents($sessionPath, json_encode($data));
+                    }
+                }
+                usleep(100000);
+            }
+            exit;
+        }
 
         $server = Server::builder()
             ->setServerInfo('TYPO3 Changelog MCP Server', '0.0.1')
@@ -108,12 +161,37 @@ class ChangelogMcpReaction implements ReactionInterface
             ),
         ];
 
+        $queryParams = $request->getQueryParams();
+        $sessionId = $queryParams['sessionId'] ?? null;
+        if ($sessionId) {
+            $request = $request->withHeader('Mcp-Session-Id', $sessionId);
+        }
+
         $transport = new Server\Transport\StreamableHttpTransport(
             request: $request,
             logger: $this->logger,
             middleware: $middleware,
         );
 
-        return $server->run($transport);
+        $response = $server->run($transport);
+
+        if ($sessionId && $response->getStatusCode() === 200) {
+            $body = (string)$response->getBody();
+            $sessionPath = Environment::getVarPath() . '/changelog_mcp_sessions/' . $sessionId;
+            if (is_file($sessionPath)) {
+                $sessionData = json_decode(file_get_contents($sessionPath), true) ?: [];
+                $sessionData['_mcp']['outgoing_queue'][] = [
+                    'message' => $body,
+                    'context' => ['type' => 'response']
+                ];
+                file_put_contents($sessionPath, json_encode($sessionData));
+            }
+            $emptyResponse = new Response();
+            return $emptyResponse
+                ->withStatus(202)
+                ->withHeader('Content-Type', 'application/json');
+        }
+
+        return $response;
     }
 }
