@@ -17,8 +17,8 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\EmbeddedResource;
 use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Result\CallToolResult;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
 use StefanFroemken\ChangelogMcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
 use TYPO3\CMS\Core\Log\LogManager;
@@ -46,7 +46,7 @@ final readonly class FindChangelogTool
         #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version (e.g. "10", "11.5", "12.4", "13", "14"). If empty, searches across all versions. Highly recommended.')] ?string $version = null,
         #[CompletionProvider(enum: ChangelogEnum::class)]
         #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
-    ): array {
+    ): CallToolResult {
         $this->logger->info(sprintf('Search for Changelogs: [Query: %s] [Version: %s]', $query, $version));
 
         $versionParam = $version === '' ? null : $version;
@@ -78,7 +78,7 @@ final readonly class FindChangelogTool
             );
         }
 
-        return $content;
+        return new CallToolResult($content);
     }
 
     #[McpResourceTemplate(
