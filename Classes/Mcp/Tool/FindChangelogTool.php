@@ -24,6 +24,11 @@ use StefanFroemken\ChangelogMcp\Mcp\Tool\CompletionProvider\Typo3VersionCompleti
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * Note: This class is instantiated via MCP reflection using getInstance().
+ * Dependency injection is not available in this context, so the TYPO3 logger
+ * is created manually via GeneralUtility.
+ */
 final readonly class FindChangelogTool
 {
     private LoggerInterface $logger;
