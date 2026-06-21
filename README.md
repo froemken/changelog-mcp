@@ -2,6 +2,15 @@
 
 This TYPO3 extension catalogues official TYPO3 Core changelogs, converts them to Markdown, and provides them via the **Model Context Protocol (MCP)**. This allows AI assistants (like Claude, PhpStorm, or other MCP-compatible clients) to access up-to-date information about TYPO3 Core APIs, deprecations, breaking changes, features, and important notes directly from your TYPO3 instance.
 
+> [!NOTE]
+> **Target Audience & Use Case:**
+> Large cloud-based LLMs (such as Gemini or GPT-4) can often answer TYPO3 changelog questions out of the box using their pre-trained knowledge.
+> 
+> This MCP server is primarily designed for:
+> - **Local LLMs**: Small models running locally (e.g., via Ollama/Llama.cpp) on your PC/Mac that lack training data on specific TYPO3 versions.
+> - **Isolated or Air-gapped Networks**: Environments where AI models cannot access the internet or external documentation.
+> - **Guaranteed Accuracy**: Preventing LLM hallucinations by forcing the model to query the exact, official database.
+
 ---
 
 ## Features
