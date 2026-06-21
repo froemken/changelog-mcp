@@ -115,23 +115,30 @@ class ChangelogRepository implements LoggerAwareInterface
 
         // 2. Intelligent version filtering
         if ($typo3Version !== null && $typo3Version !== '') {
-            if (!str_contains($typo3Version, '.')) {
-                // Only major version provided (e.g., "14")
-                $constraints[] = $queryBuilder->expr()->eq(
+            $targetParts = explode('.', $typo3Version);
+            $targetMajor = (int)$targetParts[0];
+
+            if ($prompt !== null && $prompt !== '') {
+                // For keyword searches, allow any version less than or equal to the target major version.
+                // Further precise filtering (down to minor/patch) is done in PHP after retrieving records.
+                $constraints[] = $queryBuilder->expr()->lte(
                     'major_version',
-                    $queryBuilder->createNamedParameter((int)$typo3Version, Connection::PARAM_INT),
+                    $queryBuilder->createNamedParameter($targetMajor, Connection::PARAM_INT),
                 );
             } else {
-                // Specific version provided (e.g., "11.5.23" or "12.4")
-                // We normalize to Major.Minor to ensure we find all related entries
-                $parts = explode('.', $typo3Version);
-                $normalizedVersion = $parts[0] . '.' . $parts[1];
-
-                // Use LIKE to match "12.4" against "12.4.1", "12.4.2", etc.
-                $constraints[] = $queryBuilder->expr()->like(
-                    'version_string',
-                    $queryBuilder->createNamedParameter($normalizedVersion . '%'),
-                );
+                // For non-search listings, match the requested version strictly.
+                if (count($targetParts) === 1) {
+                    $constraints[] = $queryBuilder->expr()->eq(
+                        'major_version',
+                        $queryBuilder->createNamedParameter($targetMajor, Connection::PARAM_INT),
+                    );
+                } else {
+                    $normalizedVersion = $targetParts[0] . '.' . $targetParts[1];
+                    $constraints[] = $queryBuilder->expr()->like(
+                        'version_string',
+                        $queryBuilder->createNamedParameter($normalizedVersion . '%'),
+                    );
+                }
             }
         }
 
@@ -203,9 +210,19 @@ class ChangelogRepository implements LoggerAwareInterface
             ->addSelectLiteral($scoreExpression . ' AS score')
             ->from(self::TABLE)
             ->orderBy('score', 'DESC')
-            ->setMaxResults(50);
+            ->setMaxResults($prompt !== null && $prompt !== '' ? 100 : 50);
 
         $results = $queryBuilder->executeQuery()->fetchAllAssociative();
+
+        if ($prompt !== null && $prompt !== '' && $typo3Version !== null && $typo3Version !== '') {
+            $filteredResults = [];
+            foreach ($results as $result) {
+                if ($this->isVersionCompatible($result['version_string'], $typo3Version)) {
+                    $filteredResults[] = $result;
+                }
+            }
+            $results = $filteredResults;
+        }
 
         $maxScore = 0;
         foreach ($results as $result) {
@@ -256,5 +273,42 @@ class ChangelogRepository implements LoggerAwareInterface
             ->add(GeneralUtility::makeInstance(HiddenRestriction::class));
 
         return $queryBuilder;
+    }
+
+    private function isVersionCompatible(string $dbVersion, string $targetVersion): bool
+    {
+        $dbParts = explode('.', $dbVersion);
+        $targetParts = explode('.', $targetVersion);
+
+        $dbMajor = (int)($dbParts[0] ?? 0);
+        $dbMinor = isset($dbParts[1]) ? (int)$dbParts[1] : 0;
+        $dbPatch = isset($dbParts[2]) ? (int)$dbParts[2] : 0;
+
+        $targetMajor = (int)($targetParts[0] ?? 0);
+
+        if (count($targetParts) === 1) {
+            return $dbMajor <= $targetMajor;
+        }
+
+        $targetMinor = (int)$targetParts[1];
+        if (count($targetParts) === 2) {
+            if ($dbMajor < $targetMajor) {
+                return true;
+            }
+            return $dbMajor === $targetMajor && $dbMinor <= $targetMinor;
+        }
+
+        $targetPatch = (int)$targetParts[2];
+        if ($dbMajor < $targetMajor) {
+            return true;
+        }
+        if ($dbMajor === $targetMajor) {
+            if ($dbMinor < $targetMinor) {
+                return true;
+            }
+            return $dbMinor === $targetMinor && $dbPatch <= $targetPatch;
+        }
+
+        return false;
     }
 }

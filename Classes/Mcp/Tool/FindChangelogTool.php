@@ -48,7 +48,7 @@ final readonly class FindChangelogTool
     #[McpTool(name: 'search_changelogs')]
     public function search(
         #[Schema(description: 'Search for changelogs. ALWAYS use the results to identify the correct UID, then IMMEDIATELY fetch the full content using the resource URI for any migration task. Never provide advice based solely on the list of titles.')] string $query = '',
-        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version (e.g. "10", "11.5", "12.4", "13", "14"). If empty, searches across all versions. Highly recommended.')] ?string $version = null,
+        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version to upgrade to or target (e.g. "10", "11.5", "12.4", "13", "14"). The search will return matching changelogs up to this version.')] ?string $version = null,
         #[CompletionProvider(enum: ChangelogEnum::class)]
         #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
     ): CallToolResult {
