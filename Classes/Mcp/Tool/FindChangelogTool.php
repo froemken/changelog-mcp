@@ -68,6 +68,9 @@ final readonly class FindChangelogTool
                 $searchResult['change_type'],
                 $searchResult['version_string'],
             );
+            if (!empty($searchResult['summary'])) {
+                $text .= '  Summary: ' . str_replace("\n", "\n  ", trim($searchResult['summary'])) . PHP_EOL . PHP_EOL;
+            }
         }
 
         $content = [

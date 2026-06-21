@@ -43,6 +43,7 @@ class ChangelogRepository implements LoggerAwareInterface
                 'major_version' => $changelog->getMajorVersion(),
                 'issue_number' => $changelog->getIssueNumber(),
                 'tags' => $changelog->getTags(),
+                'summary' => $changelog->getDescription(),
                 'content' => $changelog->getMdContent(),
             ],
         );

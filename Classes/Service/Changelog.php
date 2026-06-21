@@ -130,4 +130,37 @@ readonly class Changelog
 
         return trim($titleLine);
     }
+
+    /**
+     * Extracts the Description section from the Markdown content.
+     */
+    public function getDescription(): string
+    {
+        $lines = explode("\n", $this->mdContent);
+        $descriptionLines = [];
+        $inDescription = false;
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (preg_match('/^#+\s+Description\b/i', $trimmed)) {
+                $inDescription = true;
+                continue;
+            }
+            if ($inDescription) {
+                // Stop when encountering a new header at the same or higher level (e.g. ## Impact)
+                if (str_starts_with($trimmed, '#')) {
+                    break;
+                }
+                $descriptionLines[] = $line;
+            }
+        }
+
+        $descriptionText = trim(implode("\n", $descriptionLines));
+
+        if (mb_strlen($descriptionText) > 1000) {
+            $descriptionText = mb_substr($descriptionText, 0, 997) . '...';
+        }
+
+        return $descriptionText;
+    }
 }

@@ -27,7 +27,7 @@ return [
     ],
     'types' => [
         0 => [
-            'showitem' => 'hidden, title, change_type, version_string, major_version, issue_number, tags, content',
+            'showitem' => 'hidden, title, change_type, version_string, major_version, issue_number, tags, summary, content',
         ],
     ],
     'palettes' => [],
@@ -99,6 +99,16 @@ return [
                 'type' => 'text',
                 'cols' => 40,
                 'rows' => 3,
+                'eval' => 'trim',
+            ],
+        ],
+        'summary' => [
+            'exclude' => false,
+            'label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.summary',
+            'config' => [
+                'type' => 'text',
+                'cols' => 80,
+                'rows' => 5,
                 'eval' => 'trim',
             ],
         ],

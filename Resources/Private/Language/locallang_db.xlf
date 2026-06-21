@@ -61,5 +61,15 @@
         <source>Content</source>
       </segment>
     </unit>
+    <unit id="tx_changelogmcp_changelog.summary">
+      <segment state="final">
+        <source>Summary</source>
+      </segment>
+    </unit>
+    <unit id="tx_changelogmcp_changelog.change_type.summary">
+      <segment state="final">
+        <source>Summary</source>
+      </segment>
+    </unit>
   </file>
 </xliff>
