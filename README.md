@@ -105,3 +105,21 @@ curl -X POST "https://typo3143.ddev.site/typo3/reaction/a7279da8-56c1-4642-8248-
         "id": 2
       }'
 ```
+
+### Step 3: MCP Client Configuration
+To connect an MCP client (such as Claude Desktop, Windsurf, or Antigravity) to this server over HTTP, you can add this block to your `mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "typo3-changelog-http": {
+      "serverUrl": "https://typo3143.ddev.site/typo3/reaction/a7279da8-56c1-4642-8248-74668bd50a82",
+      "headers": {
+        "x-api-key": "API_SECRET",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      }
+    }
+  }
+}
+```
