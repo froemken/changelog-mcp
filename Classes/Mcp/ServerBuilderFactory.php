@@ -52,10 +52,6 @@ TEXT;
 
     private const SESSION_PATH = '/changelog_mcp_sessions';
 
-    public function __construct(
-        private ContainerInterface $container,
-    ) {}
-
     /**
      * Creates the TYPO3 Changelog MCP server.
      *
@@ -68,7 +64,7 @@ TEXT;
         return Server::builder()
             ->setServerInfo('TYPO3 Changelog MCP', '1.0.0')
             ->setProtocolVersion($protocolVersion)
-            ->setContainer($this->container)
+            ->setContainer(GeneralUtility::getContainer())
             ->setInstructions(self::INSTRUCTIONS)
             ->setSession($this->getSessionStorage())
             ->setDiscovery(

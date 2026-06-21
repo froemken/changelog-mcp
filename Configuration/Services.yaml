@@ -7,5 +7,5 @@ services:
   StefanFroemken\ChangelogMcp\:
     resource: '../Classes/*'
 
-  StefanFroemken\ChangelogMcp\Tool\FindChangelogTool:
+  StefanFroemken\ChangelogMcp\Mcp\Tool\FindChangelogTool:
     public: true
