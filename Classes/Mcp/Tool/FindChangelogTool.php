@@ -20,7 +20,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Psr\Log\LoggerInterface;
 use StefanFroemken\ChangelogMcp\Domain\Repository\ChangelogRepository;
-use StefanFroemken\ChangelogMcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
+use StefanFroemken\ChangelogMcp\Mcp\Tool\CompletionProvider\Typo3VersionCompletionProvider;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
