@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace StefanFroemken\ChangelogMcp\Mcp\Tool;
 
 use Mcp\Capability\Attribute\CompletionProvider;
-use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\EmbeddedResource;
@@ -47,7 +46,7 @@ final readonly class FindChangelogTool
      */
     #[McpTool(name: 'search_changelogs')]
     public function search(
-        #[Schema(description: 'Search for changelogs. ALWAYS use the results to identify the correct UID, then IMMEDIATELY fetch the full content using the resource URI for any migration task. Never provide advice based solely on the list of titles.')] string $query = '',
+        #[Schema(description: 'Search for changelogs. ALWAYS use the results to identify the correct UID, then IMMEDIATELY fetch the full content using the show_changelog tool with the UID for details and migration instructions. Never provide advice based solely on titles.')] string $query = '',
         #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version to upgrade to or target (e.g. "10", "11.5", "12.4", "13", "14"). The search will return matching changelogs up to this version.')] ?string $version = null,
         #[CompletionProvider(enum: ChangelogEnum::class)]
         #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
@@ -86,19 +85,24 @@ final readonly class FindChangelogTool
         return new CallToolResult($content);
     }
 
-    #[McpResourceTemplate(
-        uriTemplate: 'typo3://changelog/{uid}',
-        name: 'changelog_content',
-        mimeType: 'text/markdown',
-    )]
-    public function getChangelogContent(string $uid): string
-    {
-        $content = $this->changelogRepository->getChangelogContentByUid((int)$uid);
+    /**
+     * Retrieve the complete content of a specific TYPO3 changelog entry by its UID.
+     * Always call this tool to read the details, migration steps, and code examples of a changelog.
+     */
+    #[McpTool(name: 'show_changelog')]
+    public function showChangelog(
+        #[Schema(description: 'The UID of the changelog entry (e.g. 197).')] int $uid,
+    ): CallToolResult {
+        $content = $this->changelogRepository->getChangelogContentByUid($uid);
 
         if (!$content) {
-            throw new \Mcp\Exception\ResourceReadException('Changelog with ID ' . $uid . ' not found.');
+            return new CallToolResult([
+                new TextContent('Changelog with ID ' . $uid . ' not found.'),
+            ], isError: true);
         }
 
-        return $content;
+        return new CallToolResult([
+            new TextContent($content),
+        ]);
     }
 }
