@@ -44,7 +44,14 @@ vendor/bin/typo3 changelog:mcp:server
 ```
 
 ### 2. HTTP Transport (via TYPO3 Reactions)
-The extension implements [ChangelogMcpReaction](file:///Users/froemken/htdocs/typo3143/packages/changelog-mcp/Classes/Reaction/ChangelogMcpReaction.php) to expose the MCP server over HTTP endpoint under TYPO3 Reactions.
+The extension implements `ChangelogMcpReaction` to expose the MCP server over an HTTP endpoint under TYPO3 Reactions.
+
+To use the HTTP transport, you must configure a Reaction record in the TYPO3 Backend:
+1. Go to **Integrations** -> **Reactions** in the backend module menu.
+2. Click to create a new Reaction record.
+3. Select the **TYPO3 Changelog MCP** reaction type (defined in `Resources/Private/Language/locallang_reaction.xlf`).
+4. Provide a description and set up the secret API key.
+5. Save the record and use the generated Reaction ID (UUID, e.g., `a7279da8-56c1-4642-8248-74668bd50a82`) for your requests.
 
 ---
 
