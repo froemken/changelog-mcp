@@ -13,7 +13,10 @@ namespace StefanFroemken\ChangelogMcp\Mcp;
 
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Server;
+use Mcp\Server\Session\FileSessionStore;
+use Mcp\Server\Session\SessionStoreInterface;
 use Psr\Container\ContainerInterface;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final readonly class ServerBuilderFactory
@@ -40,9 +43,14 @@ TEXT;
 
     private const BASE_PATH = 'EXT:changelog_mcp/Classes/';
 
+    /**
+     * Define the paths where to search for MCP PHP attributes
+     */
     private const SCAN_DIRS = [
-        'Tool',
+        'Mcp/Tool',
     ];
+
+    private const SESSION_PATH = '/changelog_mcp_sessions';
 
     public function __construct(
         private ContainerInterface $container,
@@ -62,10 +70,24 @@ TEXT;
             ->setProtocolVersion($protocolVersion)
             ->setContainer($this->container)
             ->setInstructions(self::INSTRUCTIONS)
+            ->setSession($this->getSessionStorage())
             ->setDiscovery(
                 basePath: GeneralUtility::getFileAbsFileName(self::BASE_PATH),
                 scanDirs: self::SCAN_DIRS,
+                namePatterns: ['*.php'],
             )
             ->build();
+    }
+
+    private function getSessionStorage(): SessionStoreInterface
+    {
+        GeneralUtility::mkdir_deep($this->getAbsSessionPath());
+
+        return new FileSessionStore($this->getAbsSessionPath());
+    }
+
+    private function getAbsSessionPath(): string
+    {
+        return Environment::getVarPath() . self::SESSION_PATH;
     }
 }
