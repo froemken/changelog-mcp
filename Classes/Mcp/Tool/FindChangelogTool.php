@@ -9,7 +9,7 @@ declare(strict_types=1);
  * LICENSE file that was distributed with this source code.
  */
 
-namespace StefanFroemken\ChangelogMcp\Tool;
+namespace StefanFroemken\ChangelogMcp\Mcp\Tool;
 
 use Mcp\Capability\Attribute\CompletionProvider;
 use Mcp\Capability\Attribute\McpResourceTemplate;

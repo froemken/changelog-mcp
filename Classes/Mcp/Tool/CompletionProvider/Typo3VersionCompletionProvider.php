@@ -9,7 +9,7 @@ declare(strict_types=1);
  * LICENSE file that was distributed with this source code.
  */
 
-namespace StefanFroemken\ChangelogMcp\Tool\CompletionProvider;
+namespace StefanFroemken\ChangelogMcp\Mcp\Tool\CompletionProvider;
 
 use Doctrine\DBAL\Exception;
 use Mcp\Capability\Completion\ProviderInterface;
