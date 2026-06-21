@@ -15,7 +15,6 @@ use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\SessionStoreInterface;
-use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -31,7 +30,7 @@ CORE RESPONSIBILITY:
 
 WORKFLOW RULES:
 1. Always query the 'search_changelogs' tool FIRST.
-2. If the tool returns results: Prioritize the data from the tool over your own memory. Always cite the version and the specific changelog entry as the source of truth.
+2. If the tool returns results: Prioritize the data from the tool over your own memory. Always cite the version and the specific changelog entry as the source of truth. If the search results indicate a relevant deprecation or breaking change, proceed to fetch the full content (resource read) immediately to provide the user with actionable migration steps without further prompting.
 3. If the tool returns no results: Only then proceed to use your internal knowledge or external web search, explicitly stating that no direct changelog entry was found.
 4. When presenting data: Organize information by TYPO3 version, highlight breaking changes clearly, and suggest migration steps if provided in the changelog content.
 
