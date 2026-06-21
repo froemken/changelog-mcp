@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Reaction;
 
-use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Server;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
+use StefanFroemken\ChangelogMcp\Mcp\ServerBuilderFactory;
 use Symfony\Component\Uid\Uuid;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Http\NormalizedParams;
@@ -40,6 +40,7 @@ use TYPO3\CMS\Reactions\Reaction\ReactionInterface;
 class ChangelogMcpReaction implements ReactionInterface
 {
     public function __construct(
+        private readonly ServerBuilderFactory $serverBuilderFactory,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -116,79 +117,19 @@ class ChangelogMcpReaction implements ReactionInterface
             exit;
         }
 
-        $instructions = <<<TEXT
-You are connected to a community-provided TYPO3 Changelog MCP server.
-This server indexes and provides direct access to the official TYPO3 Core changelogs, including:
-1. **Breaking Changes** (High Priority) - Changes that remove or modify APIs, breaking backward compatibility.
-2. **Deprecations** (High Priority) - APIs marked for future removal. Always check these when refactoring or preparing upgrades.
-3. **Features** (High Priority) - New APIs, configuration options, or features introduced in TYPO3.
-4. **Importants** (Normal Priority) - Important notes and informational updates that do not fall under breaking, deprecation, or feature.
-
-CRITICAL INSTRUCTIONS:
-- You MUST query this server FIRST whenever the user asks about TYPO3 APIs, deprecations, breaking changes, features, or upgrades.
-- Do NOT rely on your pre-trained LLM knowledge for TYPO3 changelog information, as TYPO3 versions evolve rapidly and your knowledge may be outdated or incomplete.
-- If the tool 'search_changelogs' returns no results, you are then permitted to use web search or external documentation to find the required information.
-TEXT;
-
-        $server = Server::builder()
-            ->setServerInfo('TYPO3 Changelog MCP Server', '0.0.1')
-            ->setContainer(GeneralUtility::getContainer())
-            ->setInstructions($instructions)
-            // Set the protocol version to be compatible with PhpStorm MCP integration
-            ->setProtocolVersion(ProtocolVersion::V2024_11_05)
-            ->setDiscovery(
-                basePath: GeneralUtility::getFileAbsFileName('EXT:changelog_mcp/Classes/'),
-                scanDirs: ['Tool'],
-            )
-            ->setSession(
-                new Server\Session\FileSessionStore(
-                    Environment::getVarPath() . '/changelog_mcp_sessions',
-                ),
-            )
-            ->build();
-
         // Ensure the request body stream is at the beginning for the transport to read it.
         // This is a common issue with PSR-7 streams that might have been read by other middlewares.
         $request->getBody()->rewind();
 
-        /** @var NormalizedParams $normalizedParams */
-        $normalizedParams = $request->getAttribute('normalizedParams');
-        $detectedHost = $normalizedParams->getHttpHost();
-
-        $middleware = [
-            new Server\Transport\Http\Middleware\ProtocolVersionMiddleware(),
-            new Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware([
-                $detectedHost,
-                'localhost',
-                '127.0.0.1',
-            ]),
-            new Server\Transport\Http\Middleware\CorsMiddleware(
-                allowedOrigins: ['*'],
-                allowedMethods: ['GET', 'POST', 'OPTIONS'],
-                allowedHeaders: [
-                    'Accept',
-                    'Authorization',
-                    'Content-Type',
-                    'Last-Event-ID',
-                    Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
-                    Server\Transport\StreamableHttpTransport::SESSION_HEADER,
-                ]
-            ),
-        ];
-
         $queryParams = $request->getQueryParams();
+
         $sessionId = $queryParams['sessionId'] ?? null;
         if ($sessionId) {
             $request = $request->withHeader('Mcp-Session-Id', $sessionId);
         }
 
-        $transport = new Server\Transport\StreamableHttpTransport(
-            request: $request,
-            logger: $this->logger,
-            middleware: $middleware,
-        );
-
-        $response = $server->run($transport);
+        $server = $this->serverBuilderFactory->createServer();
+        $response = $server->run($this->createHttpTransport($request));
 
         if ($sessionId && $response->getStatusCode() === 200) {
             $body = (string)$response->getBody();
@@ -208,5 +149,43 @@ TEXT;
         }
 
         return $response;
+    }
+
+    private function createHttpTransport(ServerRequestInterface $request): Server\Transport\StreamableHttpTransport
+    {
+        return new Server\Transport\StreamableHttpTransport(
+            request: $request,
+            logger: $this->logger,
+            middleware: $this->getHttpTransportMiddlewares($request),
+        );
+    }
+
+    private function getHttpTransportMiddlewares(ServerRequestInterface $request): array
+    {
+        return [
+            new Server\Transport\Http\Middleware\ProtocolVersionMiddleware(),
+            new Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware([
+                $this->getNormalizedParams($request)->getHttpHost(),
+                'localhost',
+                '127.0.0.1',
+            ]),
+            new Server\Transport\Http\Middleware\CorsMiddleware(
+                allowedOrigins: ['*'],
+                allowedMethods: ['GET', 'POST', 'OPTIONS'],
+                allowedHeaders: [
+                    'Accept',
+                    'Authorization',
+                    'Content-Type',
+                    'Last-Event-ID',
+                    Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
+                    Server\Transport\StreamableHttpTransport::SESSION_HEADER,
+                ]
+            ),
+        ];
+    }
+
+    private function getNormalizedParams(ServerRequestInterface $request): NormalizedParams
+    {
+        return $request->getAttribute('normalizedParams');
     }
 }
