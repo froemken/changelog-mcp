@@ -2,9 +2,9 @@
 
 ..  _installation:
 
-======================
-Installation and setup
-======================
+============
+Installation
+============
 
 ..  _installation-prerequisites:
 
@@ -16,7 +16,8 @@ following requirements:
 
 *   **PHP:** Version 8.2 or higher with the `ext-mbstring` extension enabled.
 *   **TYPO3:** Version 14.0 or higher.
-*   **System extensions:** `typo3/cms-reactions` must be installed and active.
+*   **System extensions:** `typo3/cms-reactions` must be installed and active
+    for HTTP transport support.
 *   **TYPO3 Core files:** The TYPO3 Core changelogs must exist in your project
     under :file:`vendor/typo3/cms-core/Documentation/Changelog/`.
 *   **Filesystem permissions:** The TYPO3 environment var directory must be
@@ -66,9 +67,9 @@ This command performs the following operations:
 
 1.  Scans :file:`vendor/typo3/cms-core/Documentation/Changelog/` recursively for
     version folders (such as :file:`10.4/`, :file:`13.4/`, and :file:`14.0/`).
-2.  Cleans and normalizes ReST directives and external references.
+2.  Cleans and normalizes reST directives and external references.
 3.  Truncates any existing records in `tx_changelogmcp_changelog`.
-4.  Renders the ReST content to structured Markdown using custom Twig
+4.  Renders the reST content to structured Markdown using custom Twig
     templates.
 5.  Extracts title, change type, target version, issue number, and summary.
 6.  Inserts each changelog entry into the database.

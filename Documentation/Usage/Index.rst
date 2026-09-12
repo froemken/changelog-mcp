@@ -50,7 +50,7 @@ HTTP endpoints.
 
 Configure the Reaction in the TYPO3 backend:
 
-1.  Open the TYPO3 backend and navigate to :guilabel:`Integrations > Reactions`.
+1.  Open the TYPO3 backend and navigate to :guilabel:`Admin Tools > Integrations > Reactions`.
 2.  Click :guilabel:`Create new reaction`.
 3.  Select the reaction type :guilabel:`TYPO3 Changelog MCP`.
 4.  Enter a descriptive title and define a secret API key.
