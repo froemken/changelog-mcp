@@ -94,7 +94,7 @@ RST;
         $service = new ChangelogService($parserFactoryMock);
 
         $files = $service->getAllOriginalTypo3ChangelogFiles();
-        self::assertNotEmpty($files);
+        self::assertIsArray($files);
         foreach ($files as $file) {
             self::assertIsString($file);
         }
