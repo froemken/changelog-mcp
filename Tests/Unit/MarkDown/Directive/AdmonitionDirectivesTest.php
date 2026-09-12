@@ -65,8 +65,24 @@ final class AdmonitionDirectivesTest extends UnitTestCase
         self::assertStringContainsString('> Test admonition content', $rendered);
     }
 
+    /**
+     * @return array<string, array{0: SubDirective}>
+     */
+    public static function admonitionInstancesDataProvider(): array
+    {
+        return [
+            'Attention' => [new Attention()],
+            'Hint' => [new Hint()],
+            'Important' => [new Important()],
+            'Note' => [new Note()],
+            'SeeAlso' => [new SeeAlso()],
+            'Tip' => [new Tip()],
+            'Warning' => [new Warning()],
+        ];
+    }
+
     #[Test]
-    #[DataProvider('admonitionDirectivesDataProvider')]
+    #[DataProvider('admonitionInstancesDataProvider')]
     public function processSubReturnsNullWhenDocumentIsNull(SubDirective $directive): void
     {
         $parserMock = $this->createMock(Parser::class);
