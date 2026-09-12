@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<guides xmlns="https://www.phpdoc.org/guides"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://www.phpdoc.org/guides https://raw.githubusercontent.com/phpDocumentor/guides/refs/heads/main/packages/guides/resources/schema/guides.xsd"
+        default-code-language="php">
+
+    <project title="MCP for TYPO3 Changelogs"
+             copyright="since 2026 by Stefan Froemken &amp; contributors"
+             version="main"/>
+
+    <extension class="\T3Docs\Typo3DocsTheme\DependencyInjection\Typo3DocsThemeExtension"
+               edit-on-github="froemken/changelog-mcp"
+               edit-on-github-branch="main"
+               project-home="https://github.com/froemken/changelog-mcp"
+               project-repository="https://github.com/froemken/changelog-mcp"
+               project-issues="https://github.com/froemken/changelog-mcp/issues"
+               interlink-shortcode="froemken/changelog-mcp"
+               typo3-core-preferred="14.0"/>
+
+    <!-- External manual inventories for :ref:`... <id:anchor>` -->
+    <inventory id="t3coreapi" url="https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/"/>
+</guides>
