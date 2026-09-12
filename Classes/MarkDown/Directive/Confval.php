@@ -13,14 +13,14 @@ namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
 use Doctrine\RST\Directives\SubDirective;
 use Doctrine\RST\Nodes\Node;
+use Doctrine\RST\Nodes\WrapperNode;
 use Doctrine\RST\Parser;
-use StefanFroemken\ChangelogMcp\MarkDown\Node\AdmonitionNode;
 
-final class VersionAdded extends SubDirective
+final class Confval extends SubDirective
 {
     public function getName(): string
     {
-        return 'versionadded';
+        return 'confval';
     }
 
     public function processSub(
@@ -34,8 +34,8 @@ final class VersionAdded extends SubDirective
             return null;
         }
 
-        $header = '> **Added in version ' . trim($data) . ":**\n";
+        $header = $data !== '' ? '### ' . trim($data) . "\n\n" : '';
 
-        return new AdmonitionNode($document, $header);
+        return new WrapperNode($document, $header, "\n");
     }
 }

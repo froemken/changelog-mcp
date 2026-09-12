@@ -11,31 +11,25 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
-use Doctrine\RST\Directives\SubDirective;
+use Doctrine\RST\Directives\Directive;
 use Doctrine\RST\Nodes\Node;
 use Doctrine\RST\Parser;
-use StefanFroemken\ChangelogMcp\MarkDown\Node\AdmonitionNode;
 
-final class VersionAdded extends SubDirective
+final class Toctree extends Directive
 {
     public function getName(): string
     {
-        return 'versionadded';
+        return 'toctree';
     }
 
-    public function processSub(
+    /**
+     * @param string[] $options
+     */
+    public function process(
         Parser $parser,
-        ?Node $document,
+        ?Node $node,
         string $variable,
         string $data,
         array $options,
-    ): ?Node {
-        if ($document === null) {
-            return null;
-        }
-
-        $header = '> **Added in version ' . trim($data) . ":**\n";
-
-        return new AdmonitionNode($document, $header);
-    }
+    ): void {}
 }

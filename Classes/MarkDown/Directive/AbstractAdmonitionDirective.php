@@ -16,12 +16,9 @@ use Doctrine\RST\Nodes\Node;
 use Doctrine\RST\Parser;
 use StefanFroemken\ChangelogMcp\MarkDown\Node\AdmonitionNode;
 
-final class VersionAdded extends SubDirective
+abstract class AbstractAdmonitionDirective extends SubDirective
 {
-    public function getName(): string
-    {
-        return 'versionadded';
-    }
+    abstract protected function getAlertTag(): string;
 
     public function processSub(
         Parser $parser,
@@ -34,7 +31,7 @@ final class VersionAdded extends SubDirective
             return null;
         }
 
-        $header = '> **Added in version ' . trim($data) . ":**\n";
+        $header = '> [!' . $this->getAlertTag() . "]\n";
 
         return new AdmonitionNode($document, $header);
     }

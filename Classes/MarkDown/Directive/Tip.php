@@ -11,15 +11,15 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
-final class Warning extends AbstractAdmonitionDirective
+final class Tip extends AbstractAdmonitionDirective
 {
     public function getName(): string
     {
-        return 'warning';
+        return 'tip';
     }
 
     protected function getAlertTag(): string
     {
-        return 'WARNING';
+        return 'TIP';
     }
 }

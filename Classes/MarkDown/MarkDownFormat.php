@@ -42,8 +42,10 @@ class MarkDownFormat implements Format
     {
         return [
             new MarkDown\Directive\Attention(),
+            new MarkDown\Directive\Confval(),
             new MarkDown\Directive\Container(),
             new MarkDown\Directive\Contents(),
+            new MarkDown\Directive\CsvTable(),
             new MarkDown\Directive\Hint(),
             new MarkDown\Directive\Important(),
             new MarkDown\Directive\Index(),
@@ -51,7 +53,9 @@ class MarkDownFormat implements Format
             new MarkDown\Directive\RstClass(),
             new MarkDown\Directive\SeeAlso(),
             new MarkDown\Directive\Sidebar(),
+            new MarkDown\Directive\Tip(),
             new MarkDown\Directive\Title(),
+            new MarkDown\Directive\Toctree(),
             new MarkDown\Directive\VersionAdded(),
             new MarkDown\Directive\Warning(),
         ];

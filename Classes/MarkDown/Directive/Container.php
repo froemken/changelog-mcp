@@ -11,30 +11,24 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
-use Doctrine\RST\Directives\Directive;
+use Doctrine\RST\Directives\SubDirective;
 use Doctrine\RST\Nodes\Node;
 use Doctrine\RST\Parser;
 
-/**
- * Add index to document
- *
- * .. index:: PHP-API, ext:extbase
- */
-final class Container extends Directive
+final class Container extends SubDirective
 {
     public function getName(): string
     {
         return 'container';
     }
 
-    /**
-     * @param string[] $options
-     */
-    public function process(
+    public function processSub(
         Parser $parser,
-        ?Node $node,
+        ?Node $document,
         string $variable,
         string $data,
         array $options,
-    ): void {}
+    ): ?Node {
+        return $document;
+    }
 }

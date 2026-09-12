@@ -24,6 +24,8 @@ readonly class ChangelogService
 
     /**
      * Needed to convert rst files to Markdown
+     *
+     * @return list<string>
      */
     public function getAllOriginalTypo3ChangelogFiles(): array
     {
@@ -61,20 +63,8 @@ readonly class ChangelogService
 
     private function cleanUpChangelogContent(string $content): string
     {
-        // Doctrine RST parser only allows one space directives
-        $content = str_replace(
-            [
-                '..  include::',
-                '..  code-block::',
-                '..  warning:',
-            ],
-            [
-                '.. include::',
-                '.. code-block::',
-                '.. warning:',
-            ],
-            $content,
-        );
+        // Doctrine RST parser only allows one space after '..' for directives
+        $content = (string)preg_replace('/^\.\.\s{2,}([a-zA-Z0-9_-]+::)/m', '.. $1', $content);
 
         // Lower case directives
         $content = str_replace(
