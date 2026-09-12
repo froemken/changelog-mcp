@@ -72,9 +72,11 @@ class ParserFactory
         $configuration->setTheme('Default');
 
         // Add the template path to our twig templates to build "md" files
-        $configuration->addCustomTemplateDir(
-            GeneralUtility::getFileAbsFileName(self::TEMPLATE_PATH),
-        );
+        $templatePath = GeneralUtility::getFileAbsFileName(self::TEMPLATE_PATH);
+        if ($templatePath === '' || !is_dir($templatePath)) {
+            $templatePath = dirname(__DIR__, 2) . '/Resources/Private/Templates';
+        }
+        $configuration->addCustomTemplateDir($templatePath);
 
         return $configuration;
     }

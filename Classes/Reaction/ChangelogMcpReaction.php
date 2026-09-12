@@ -151,7 +151,10 @@ class ChangelogMcpReaction implements ReactionInterface
         return $response;
     }
 
-    private function createHttpTransport(ServerRequestInterface $request): Server\Transport\StreamableHttpTransport
+    /**
+     * @return Server\Transport\TransportInterface<ResponseInterface>
+     */
+    protected function createHttpTransport(ServerRequestInterface $request): Server\Transport\TransportInterface
     {
         return new Server\Transport\StreamableHttpTransport(
             request: $request,
