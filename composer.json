@@ -1,8 +1,8 @@
 {
 	"name": "stefanfroemken/changelog-mcp",
 	"description": "MCP for TYPO3 Changelogs - Catalogue the TYPO3 contained changelogs and provide information via MCP",
-	"type": "typo3-cms-extension",
 	"license": "GPL-2.0-or-later",
+	"type": "typo3-cms-extension",
 	"authors": [
 		{
 			"name": "Stefan Froemken",
@@ -11,10 +11,10 @@
 	],
 	"require": {
 		"ext-mbstring": "*",
-		"typo3/cms-core": "^14.0",
-		"typo3/cms-reactions": "^14.0",
 		"doctrine/rst-parser": "^0.5",
-		"mcp/sdk": "^0.8"
+		"mcp/sdk": "^0.8",
+		"typo3/cms-core": "^14.0",
+		"typo3/cms-reactions": "^14.0"
 	},
 	"require-dev": {
 		"ergebnis/composer-normalize": "^2.44",

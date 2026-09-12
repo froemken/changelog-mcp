@@ -74,6 +74,9 @@ final class ChangelogMcpReactionTest extends UnitTestCase
         ]);
 
         $reaction = new class ($factoryMock, $loggerMock, $transportMock) extends ChangelogMcpReaction {
+            /**
+             * @param TransportInterface<mixed> $mockTransport
+             */
             public function __construct(
                 ServerBuilderFactory $serverBuilderFactory,
                 LoggerInterface $logger,
@@ -82,6 +85,9 @@ final class ChangelogMcpReactionTest extends UnitTestCase
                 parent::__construct($serverBuilderFactory, $logger);
             }
 
+            /**
+             * @return TransportInterface<mixed>
+             */
             protected function createHttpTransport(ServerRequestInterface $request): TransportInterface
             {
                 return $this->mockTransport;

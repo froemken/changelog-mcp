@@ -47,6 +47,9 @@ final class ChangelogTest extends UnitTestCase
         self::assertSame(13, $changelog->getMajorVersion());
     }
 
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
     public static function titleExtractionDataProvider(): array
     {
         return [

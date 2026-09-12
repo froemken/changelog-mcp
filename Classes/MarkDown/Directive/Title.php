@@ -43,7 +43,7 @@ final class Title extends Directive
             $parser->getNodeFactory()->createRawNode('\title{' . $data . '}'),
         );
 
-        if ($node === null) {
+        if (!$node instanceof Node) {
             return;
         }
 

@@ -16,6 +16,7 @@ jobs:
           - '8.2'
           - '8.3'
           - '8.4'
+          - '8.5'
 
     steps:
       - name: 'Checkout'
@@ -35,3 +36,15 @@ jobs:
 
       - name: 'CGL'
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cgl -n
+
+      - name: 'Rector'
+        run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s rector
+
+      - name: 'PHPStan'
+        run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s phpstan
+
+      - name: 'Unit tests'
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
+
+      - name: 'Functional tests'
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -d sqlite -s functional

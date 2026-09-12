@@ -30,7 +30,7 @@ final readonly class TitleNodeRenderer implements NodeRenderer
             3 => '###',
             4 => '####',
             5 => '#####',
-            6 => '######',
+            default => '######',
         };
 
         if (preg_match('/(Important|Breaking|Deprecated|Feature): #\d+/', $this->titleNode->getValueString())) {

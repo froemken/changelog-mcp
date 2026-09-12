@@ -11,9 +11,14 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Reaction;
 
-use Mcp\Server;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
+use Mcp\Server\Transport\StreamableHttpTransport;
+use Mcp\Server\Transport\TransportInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Log\LoggerInterface;
 use StefanFroemken\ChangelogMcp\Mcp\ServerBuilderFactory;
 use Symfony\Component\Uid\Uuid;
@@ -59,6 +64,9 @@ class ChangelogMcpReaction implements ReactionInterface
         return 'module-install-environment';
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function react(
         ServerRequestInterface $request,
         array $payload,
@@ -152,27 +160,30 @@ class ChangelogMcpReaction implements ReactionInterface
     }
 
     /**
-     * @return Server\Transport\TransportInterface<ResponseInterface>
+     * @return TransportInterface<ResponseInterface>
      */
-    protected function createHttpTransport(ServerRequestInterface $request): Server\Transport\TransportInterface
+    protected function createHttpTransport(ServerRequestInterface $request): TransportInterface
     {
-        return new Server\Transport\StreamableHttpTransport(
+        return new StreamableHttpTransport(
             request: $request,
             logger: $this->logger,
             middleware: $this->getHttpTransportMiddlewares($request),
         );
     }
 
+    /**
+     * @return list<MiddlewareInterface>
+     */
     private function getHttpTransportMiddlewares(ServerRequestInterface $request): array
     {
         return [
-            new Server\Transport\Http\Middleware\ProtocolVersionMiddleware(),
-            new Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware([
+            new ProtocolVersionMiddleware(),
+            new DnsRebindingProtectionMiddleware([
                 $this->getNormalizedParams($request)->getHttpHost(),
                 'localhost',
                 '127.0.0.1',
             ]),
-            new Server\Transport\Http\Middleware\CorsMiddleware(
+            new CorsMiddleware(
                 allowedOrigins: ['*'],
                 allowedMethods: ['GET', 'POST', 'OPTIONS'],
                 allowedHeaders: [
@@ -180,8 +191,8 @@ class ChangelogMcpReaction implements ReactionInterface
                     'Authorization',
                     'Content-Type',
                     'Last-Event-ID',
-                    Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
-                    Server\Transport\StreamableHttpTransport::SESSION_HEADER,
+                    StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
+                    StreamableHttpTransport::SESSION_HEADER,
                 ],
             ),
         ];

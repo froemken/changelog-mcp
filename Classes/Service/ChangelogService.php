@@ -29,14 +29,14 @@ readonly class ChangelogService
      */
     public function getAllOriginalTypo3ChangelogFiles(): array
     {
-        return GeneralUtility::getAllFilesAndFoldersInPath(
+        return array_values(GeneralUtility::getAllFilesAndFoldersInPath(
             [],
             GeneralUtility::getFileAbsFileName(self::ORIGINAL_TYPO3_CHANGELOG_DIRECTORY),
             'rst',
             false,
             2,
             '(Howto.rst|Index.rst)',
-        );
+        ));
     }
 
     public function getChangelog(string $absFile): ?Changelog
@@ -80,9 +80,7 @@ readonly class ChangelogService
         // Remove ReST includes
         return (string)preg_replace_callback(
             '/^\.\. include:: (.+)$/m',
-            function ($match): string {
-                return '';
-            },
+            fn($match): string => '',
             $content,
         );
     }

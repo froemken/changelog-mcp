@@ -66,9 +66,10 @@ final class FindChangelogToolTest extends UnitTestCase
             ->willReturn([]);
 
         $tool = new FindChangelogTool($repositoryMock);
-        $result = $tool->search('', '', null);
+        $result = $tool->search('', '');
 
         self::assertCount(1, $result->content);
+        self::assertInstanceOf(TextContent::class, $result->content[0]);
         self::assertStringContainsString('I found 0 matching changelogs:', $result->content[0]->text);
     }
 

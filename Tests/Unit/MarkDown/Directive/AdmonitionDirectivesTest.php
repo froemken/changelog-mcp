@@ -28,6 +28,9 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class AdmonitionDirectivesTest extends UnitTestCase
 {
+    /**
+     * @return array<string, array{0: SubDirective, 1: string, 2: string}>
+     */
     public static function admonitionDirectivesDataProvider(): array
     {
         return [

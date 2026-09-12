@@ -13,22 +13,54 @@ namespace StefanFroemken\ChangelogMcp\MarkDown;
 
 use Doctrine\RST\Directives\Directive;
 use Doctrine\RST\Formats\Format;
-use Doctrine\RST\Nodes;
+use Doctrine\RST\Nodes\AnchorNode;
+use Doctrine\RST\Nodes\CodeNode;
+use Doctrine\RST\Nodes\DocumentNode;
+use Doctrine\RST\Nodes\ImageNode;
+use Doctrine\RST\Nodes\ListNode;
+use Doctrine\RST\Nodes\ParagraphNode;
+use Doctrine\RST\Nodes\QuoteNode;
+use Doctrine\RST\Nodes\SeparatorNode;
+use Doctrine\RST\Nodes\SpanNode;
+use Doctrine\RST\Nodes\TableNode;
+use Doctrine\RST\Nodes\TitleNode;
 use Doctrine\RST\Renderers\CallableNodeRendererFactory;
 use Doctrine\RST\Renderers\NodeRendererFactory;
 use Doctrine\RST\Templates\TemplateRenderer;
-use StefanFroemken\ChangelogMcp\MarkDown;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Attention;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Confval;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Container;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Contents;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\CsvTable;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Hint;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Important;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Index;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Note;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\RstClass;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\SeeAlso;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Sidebar;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Tip;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Title;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Toctree;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\VersionAdded;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\Warning;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\AnchorNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\CodeNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\DocumentNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\ImageNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\ListNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\ParagraphNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\QuoteNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\SeparatorNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\SpanNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\TableNodeRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Renderer\TitleNodeRenderer;
 
 class MarkDownFormat implements Format
 {
     private const FORMAT = 'md';
 
-    private TemplateRenderer $templateRenderer;
-
-    public function __construct(TemplateRenderer $templateRenderer)
-    {
-        $this->templateRenderer = $templateRenderer;
-    }
+    public function __construct(private readonly TemplateRenderer $templateRenderer) {}
 
     public function getFileExtension(): string
     {
@@ -41,23 +73,23 @@ class MarkDownFormat implements Format
     public function getDirectives(): array
     {
         return [
-            new MarkDown\Directive\Attention(),
-            new MarkDown\Directive\Confval(),
-            new MarkDown\Directive\Container(),
-            new MarkDown\Directive\Contents(),
-            new MarkDown\Directive\CsvTable(),
-            new MarkDown\Directive\Hint(),
-            new MarkDown\Directive\Important(),
-            new MarkDown\Directive\Index(),
-            new MarkDown\Directive\Note(),
-            new MarkDown\Directive\RstClass(),
-            new MarkDown\Directive\SeeAlso(),
-            new MarkDown\Directive\Sidebar(),
-            new MarkDown\Directive\Tip(),
-            new MarkDown\Directive\Title(),
-            new MarkDown\Directive\Toctree(),
-            new MarkDown\Directive\VersionAdded(),
-            new MarkDown\Directive\Warning(),
+            new Attention(),
+            new Confval(),
+            new Container(),
+            new Contents(),
+            new CsvTable(),
+            new Hint(),
+            new Important(),
+            new Index(),
+            new Note(),
+            new RstClass(),
+            new SeeAlso(),
+            new Sidebar(),
+            new Tip(),
+            new Title(),
+            new Toctree(),
+            new VersionAdded(),
+            new Warning(),
         ];
     }
     /**
@@ -66,92 +98,70 @@ class MarkDownFormat implements Format
     public function getNodeRendererFactories(): array
     {
         return [
-            Nodes\AnchorNode::class => new CallableNodeRendererFactory(
-                function (Nodes\AnchorNode $node): MarkDown\Renderer\AnchorNodeRenderer {
-                    return new MarkDown\Renderer\AnchorNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            AnchorNode::class => new CallableNodeRendererFactory(
+                fn(AnchorNode $node): AnchorNodeRenderer => new AnchorNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\CodeNode::class => new CallableNodeRendererFactory(
-                function (Nodes\CodeNode $node): MarkDown\Renderer\CodeNodeRenderer {
-                    return new MarkDown\Renderer\CodeNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            CodeNode::class => new CallableNodeRendererFactory(
+                fn(CodeNode $node): CodeNodeRenderer => new CodeNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\DocumentNode::class => new CallableNodeRendererFactory(
-                function (Nodes\DocumentNode $node): MarkDown\Renderer\DocumentNodeRenderer {
-                    return new MarkDown\Renderer\DocumentNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            DocumentNode::class => new CallableNodeRendererFactory(
+                fn(DocumentNode $node): DocumentNodeRenderer => new DocumentNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\ImageNode::class => new CallableNodeRendererFactory(
-                function (Nodes\ImageNode $node): MarkDown\Renderer\ImageNodeRenderer {
-                    return new MarkDown\Renderer\ImageNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            ImageNode::class => new CallableNodeRendererFactory(
+                fn(ImageNode $node): ImageNodeRenderer => new ImageNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\ListNode::class => new CallableNodeRendererFactory(
-                function (Nodes\ListNode $node): MarkDown\Renderer\ListNodeRenderer {
-                    return new MarkDown\Renderer\ListNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            ListNode::class => new CallableNodeRendererFactory(
+                fn(ListNode $node): ListNodeRenderer => new ListNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\ParagraphNode::class => new CallableNodeRendererFactory(
-                function (Nodes\ParagraphNode $node): MarkDown\Renderer\ParagraphNodeRenderer {
-                    return new MarkDown\Renderer\ParagraphNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            ParagraphNode::class => new CallableNodeRendererFactory(
+                fn(ParagraphNode $node): ParagraphNodeRenderer => new ParagraphNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\QuoteNode::class => new CallableNodeRendererFactory(
-                function (Nodes\QuoteNode $node): MarkDown\Renderer\QuoteNodeRenderer {
-                    return new MarkDown\Renderer\QuoteNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            QuoteNode::class => new CallableNodeRendererFactory(
+                fn(QuoteNode $node): QuoteNodeRenderer => new QuoteNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\SeparatorNode::class => new CallableNodeRendererFactory(
-                function (Nodes\SeparatorNode $node): MarkDown\Renderer\SeparatorNodeRenderer {
-                    return new MarkDown\Renderer\SeparatorNodeRenderer(
-                        $this->templateRenderer,
-                    );
-                },
+            SeparatorNode::class => new CallableNodeRendererFactory(
+                fn(SeparatorNode $node): SeparatorNodeRenderer => new SeparatorNodeRenderer(
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\SpanNode::class => new CallableNodeRendererFactory(
-                function (Nodes\SpanNode $node): MarkDown\Renderer\SpanNodeRenderer {
-                    return new MarkDown\Renderer\SpanNodeRenderer(
-                        $node->getEnvironment(),
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            SpanNode::class => new CallableNodeRendererFactory(
+                fn(SpanNode $node): SpanNodeRenderer => new SpanNodeRenderer(
+                    $node->getEnvironment(),
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
-            Nodes\TableNode::class => new CallableNodeRendererFactory(
-                function (Nodes\TableNode $node): MarkDown\Renderer\TableNodeRenderer {
-                    return new MarkDown\Renderer\TableNodeRenderer(
-                        $node,
-                    );
-                },
+            TableNode::class => new CallableNodeRendererFactory(
+                fn(TableNode $node): TableNodeRenderer => new TableNodeRenderer(
+                    $node,
+                ),
             ),
-            Nodes\TitleNode::class => new CallableNodeRendererFactory(
-                function (Nodes\TitleNode $node): MarkDown\Renderer\TitleNodeRenderer {
-                    return new MarkDown\Renderer\TitleNodeRenderer(
-                        $node,
-                        $this->templateRenderer,
-                    );
-                },
+            TitleNode::class => new CallableNodeRendererFactory(
+                fn(TitleNode $node): TitleNodeRenderer => new TitleNodeRenderer(
+                    $node,
+                    $this->templateRenderer,
+                ),
             ),
         ];
     }

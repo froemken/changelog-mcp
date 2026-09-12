@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the package stefanfroemken/changelog-mcp.
  *
@@ -26,8 +28,8 @@ ExtensionManagementUtility::addTcaSelectItem(
 
 $GLOBALS['TCA']['sys_reaction']['types'][ChangelogMcpReaction::getType()] = [
     'showitem' => '
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:general,
+    --div--;core.form.tabs:general,
     --palette--;;config,
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:access,
+    --div--;core.form.tabs:access,
     --palette--;;access',
 ];

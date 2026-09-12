@@ -49,6 +49,7 @@ class ParserFactory
         $configuration->setIgnoreInvalidReferences(true);
 
         // Pre configure "md" formatter
+        // @phpstan-ignore argument.type
         $configuration->setOutputFormat('md');
 
         // Set file extension

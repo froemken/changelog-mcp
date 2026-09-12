@@ -30,7 +30,7 @@ final class Confval extends SubDirective
         string $data,
         array $options,
     ): ?Node {
-        if ($document === null) {
+        if (!$document instanceof Node) {
             return null;
         }
 

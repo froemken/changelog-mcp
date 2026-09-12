@@ -158,7 +158,7 @@ readonly class Changelog
         $descriptionText = trim(implode("\n", $descriptionLines));
 
         if (mb_strlen($descriptionText) > 1000) {
-            $descriptionText = mb_substr($descriptionText, 0, 997) . '...';
+            return mb_substr($descriptionText, 0, 997) . '...';
         }
 
         return $descriptionText;

@@ -20,6 +20,7 @@ use Doctrine\RST\Nodes\ListNode;
 use Doctrine\RST\Nodes\Node;
 use Doctrine\RST\Nodes\ParagraphNode;
 use Doctrine\RST\Nodes\QuoteNode;
+use Doctrine\RST\Nodes\SpanNode;
 use Doctrine\RST\Nodes\TableNode;
 use Doctrine\RST\Nodes\TitleNode;
 use Doctrine\RST\Templates\TemplateRenderer;
@@ -129,7 +130,7 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function paragraphNodeRendererDelegatesToTemplate(): void
     {
-        $spanNode = $this->createMock(\Doctrine\RST\Nodes\SpanNode::class);
+        $spanNode = $this->createMock(SpanNode::class);
         $paragraphNode = new ParagraphNode($spanNode);
         $templateRenderer = $this->createMock(TemplateRenderer::class);
         $templateRenderer->expects($this->once())
@@ -180,8 +181,20 @@ final class NodeRenderersTest extends UnitTestCase
         $col2 = $this->createMock(Node::class);
         $col2->method('render')->willReturn('Cell 2');
 
-        $row = new class ([$col1, $col2]) {
-            public function __construct(private readonly array $columns) {}
+        $row = new class ($col1, $col2) {
+            /**
+             * @var list<Node>
+             */
+            private readonly array $columns;
+
+            public function __construct(Node ...$columns)
+            {
+                $this->columns = array_values($columns);
+            }
+
+            /**
+             * @return list<Node>
+             */
             public function getColumns(): array
             {
                 return $this->columns;

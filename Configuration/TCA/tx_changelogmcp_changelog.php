@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the package stefanfroemken/changelog-mcp.
  *
@@ -17,12 +19,10 @@ return [
         'label' => 'title',
         'tstamp' => 'tstamp',
         'crdate' => 'crdate',
-        'cruser_id' => 'cruser_id',
         'delete' => 'deleted',
         'enablecolumns' => [
             'disabled' => 'hidden',
         ],
-        'searchFields' => 'title,tags,content',
         'iconfile' => 'EXT:changelog_mcp/Resources/Public/Icons/tx_changelogmcp_changelog.svg',
     ],
     'types' => [
@@ -38,8 +38,9 @@ return [
             'config' => [
                 'type' => 'input',
                 'size' => 30,
-                'eval' => 'trim,required',
+                'eval' => 'trim',
                 'max' => 255,
+                'required' => true,
             ],
         ],
         'change_type' => [
@@ -49,10 +50,10 @@ return [
                 'type' => 'select',
                 'renderType' => 'selectSingle',
                 'items' => [
-                    ['changelog_mcp.db.:tx_changelogmcp_changelog.change_type.feature', 'feature'],
-                    ['changelog_mcp.db.:tx_changelogmcp_changelog.change_type.deprecation', 'deprecation'],
-                    ['changelog_mcp.db.:tx_changelogmcp_changelog.change_type.important', 'important'],
-                    ['changelog_mcp.db.:tx_changelogmcp_changelog.change_type.bugfix', 'bugfix'],
+                    ['label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.change_type.feature', 'value' => 'feature'],
+                    ['label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.change_type.deprecation', 'value' => 'deprecation'],
+                    ['label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.change_type.important', 'value' => 'important'],
+                    ['label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.change_type.bugfix', 'value' => 'bugfix'],
                 ],
                 'default' => 'feature',
             ],
@@ -63,30 +64,31 @@ return [
             'config' => [
                 'type' => 'input',
                 'size' => 10,
-                'eval' => 'trim,required',
+                'eval' => 'trim',
                 'max' => 20,
+                'required' => true,
+                'searchable' => false,
             ],
         ],
         'major_version' => [
             'exclude' => false,
             'label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.major_version',
             'config' => [
-                'type' => 'input',
+                'type' => 'number',
                 'size' => 4,
-                'eval' => 'int,required',
                 'range' => [
                     'lower' => 0,
                 ],
                 'default' => 0,
+                'required' => true,
             ],
         ],
         'issue_number' => [
             'exclude' => false,
             'label' => 'changelog_mcp.db.:tx_changelogmcp_changelog.issue_number',
             'config' => [
-                'type' => 'input',
+                'type' => 'number',
                 'size' => 10,
-                'eval' => 'int',
                 'range' => [
                     'lower' => 0,
                 ],
@@ -110,6 +112,7 @@ return [
                 'cols' => 80,
                 'rows' => 5,
                 'eval' => 'trim',
+                'searchable' => false,
             ],
         ],
         'content' => [

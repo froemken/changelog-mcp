@@ -35,7 +35,7 @@ final readonly class FindChangelogTool
     public function __construct(
         private ChangelogRepository $changelogRepository,
     ) {
-        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
+        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(self::class);
     }
 
     /**

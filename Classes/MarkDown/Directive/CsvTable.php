@@ -32,7 +32,7 @@ final class CsvTable extends Directive
         string $data,
         array $options,
     ): void {
-        if ($node === null) {
+        if (!$node instanceof Node) {
             return;
         }
 
@@ -48,7 +48,7 @@ final class CsvTable extends Directive
             }
         }
 
-        if (empty($rows)) {
+        if ($rows === []) {
             return;
         }
 
@@ -58,11 +58,11 @@ final class CsvTable extends Directive
         }
         $headerRow = array_shift($rows);
         $colCount = count($headerRow);
-        $md .= '| ' . implode(' | ', array_map('trim', $headerRow)) . " |\n";
+        $md .= '| ' . implode(' | ', array_map(trim(...), $headerRow)) . " |\n";
         $md .= '| ' . implode(' | ', array_fill(0, $colCount, '---')) . " |\n";
         foreach ($rows as $row) {
             $row = array_pad($row, $colCount, '');
-            $md .= '| ' . implode(' | ', array_map('trim', $row)) . " |\n";
+            $md .= '| ' . implode(' | ', array_map(trim(...), $row)) . " |\n";
         }
         $md .= "\n";
 

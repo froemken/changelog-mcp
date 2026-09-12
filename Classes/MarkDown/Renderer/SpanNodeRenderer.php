@@ -81,7 +81,7 @@ final class SpanNodeRenderer extends BaseSpanNodeRenderer
 
         if (($value['text'] ?? '') !== '') {
             $text = trim((string)$value['text']);
-            if ($target !== null && $target !== '' && $target !== $text && ($role === 'doc' || $role === 'ref')) {
+            if (!in_array($target, [null, '', $text], true) && ($role === 'doc' || $role === 'ref')) {
                 $text .= ' (' . basename($target) . ')';
             }
         } else {
