@@ -34,11 +34,11 @@ jobs:
       - name: 'Composer normalize'
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s composerNormalize -n
 
-      - name: 'CGL'
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cgl -n
-
       - name: 'Rector'
         run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s rector
+
+      - name: 'CGL'
+        run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s cgl
 
       - name: 'PHPStan'
         run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s phpstan
