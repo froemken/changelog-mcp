@@ -64,7 +64,9 @@ final class ChangelogMcpReactionTest extends UnitTestCase
         $requestMock->method('getMethod')->willReturn('POST');
         $requestMock->method('getBody')->willReturn($streamMock);
         $requestMock->method('getQueryParams')->willReturn([]);
-        $requestMock->method('getAttribute')->with('normalizedParams')->willReturn($normalizedParamsMock);
+        $requestMock->method('getAttribute')->willReturnMap([
+            ['normalizedParams', null, $normalizedParamsMock],
+        ]);
 
         $reactionInstruction = new ReactionInstruction([
             'uid' => 1,
