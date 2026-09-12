@@ -90,7 +90,7 @@ class ChangelogMcpReaction implements ReactionInterface
             $endpointUrl = $requestUrl . '?sessionId=' . $sessionId;
 
             echo "event: endpoint\n";
-            echo "data: " . $endpointUrl . "\n\n";
+            echo 'data: ' . $endpointUrl . "\n\n";
             flush();
 
             $startTime = time();
@@ -105,7 +105,7 @@ class ChangelogMcpReaction implements ReactionInterface
                     if (!empty($queue)) {
                         foreach ($queue as $item) {
                             echo "event: message\n";
-                            echo "data: " . $item['message'] . "\n\n";
+                            echo 'data: ' . $item['message'] . "\n\n";
                             flush();
                         }
                         $data['_mcp']['outgoing_queue'] = [];
@@ -138,7 +138,7 @@ class ChangelogMcpReaction implements ReactionInterface
                 $sessionData = json_decode(file_get_contents($sessionPath), true) ?: [];
                 $sessionData['_mcp']['outgoing_queue'][] = [
                     'message' => $body,
-                    'context' => ['type' => 'response']
+                    'context' => ['type' => 'response'],
                 ];
                 file_put_contents($sessionPath, json_encode($sessionData));
             }
@@ -179,7 +179,7 @@ class ChangelogMcpReaction implements ReactionInterface
                     'Last-Event-ID',
                     Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
                     Server\Transport\StreamableHttpTransport::SESSION_HEADER,
-                ]
+                ],
             ),
         ];
     }
