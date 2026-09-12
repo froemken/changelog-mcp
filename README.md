@@ -1,29 +1,34 @@
 # TYPO3 Changelog Model Context Protocol (MCP) Server
 
-This TYPO3 extension catalogues official TYPO3 Core changelogs, converts them to Markdown, and provides them via the **Model Context Protocol (MCP)**. This allows AI assistants (like Claude, PhpStorm, or other MCP-compatible clients) to access up-to-date information about TYPO3 Core APIs, deprecations, breaking changes, features, and important notes directly from your TYPO3 instance.
+This TYPO3 extension catalogues official TYPO3 Core changelogs, converts them to Markdown, and provides them via the Model Context Protocol (MCP).
+AI assistants such as Claude, PhpStorm, or other MCP-compatible clients can access up-to-date information directly from your TYPO3 instance.
+Supported topics include Core APIs, deprecations, and breaking changes along with features and important notes.
 
 > [!NOTE]
 > **Target Audience & Use Case:**
-> Large cloud-based LLMs (such as Gemini or GPT-4) can often answer TYPO3 changelog questions out of the box using their pre-trained knowledge.
+> Large cloud-based LLMs often answer TYPO3 questions using pre-trained knowledge.
 > 
 > This MCP server is primarily designed for:
-> - **Local LLMs**: Small models running locally (e.g., via Ollama/Llama.cpp) on your PC/Mac that lack training data on specific TYPO3 versions.
-> - **Isolated or Air-gapped Networks**: Environments where AI models cannot access the internet or external documentation.
-> - **Guaranteed Accuracy**: Preventing LLM hallucinations by forcing the model to query the exact, official database.
-
----
+> - **Local LLMs**: Small models running locally (via Ollama or Llama.cpp) that lack training data on specific TYPO3 versions.
+> - **Isolated Networks**: Air-gapped environments where AI models cannot access external documentation.
+> - **Guaranteed Accuracy**: Preventing LLM hallucinations by forcing models to query the exact, official database.
 
 ## Features
 
-- **Changelog Parser & Importer**: Converts TYPO3 Core RST changelogs into Markdown format and stores them in a database for fast querying.
+- **Changelog Parser and Importer**: Converts TYPO3 Core ReST changelogs into Markdown format and stores them in a database for fast querying.
 - **Model Context Protocol (MCP)**:
   - **STDIO Transport**: Supported via a TYPO3 console command.
   - **HTTP Transport**: Supported via the TYPO3 Reactions extension (SSE/GET for connections, POST for incoming requests).
-- **Session Persistence**: Utilizes `FileSessionStore` inside TYPO3's writeable directory (`var/mcp_sessions`) to persist client sessions across stateless HTTP requests.
+- **Session Persistence**: Utilizes `FileSessionStore` inside TYPO3's writeable directory (`var/changelog_mcp_sessions`) to persist client sessions across stateless HTTP requests.
 
----
+## Requirements and Prerequisites
 
-## Installation & Setup
+- PHP 8.2 or higher with `ext-mbstring`
+- TYPO3 v14.0 or higher
+- System extension `typo3/cms-reactions`
+- TYPO3 Core changelog ReST files (included in `vendor/typo3/cms-core/Documentation/Changelog/`)
+
+## Installation and Setup
 
 1. **Require the Extension**:
    ```bash
@@ -31,23 +36,21 @@ This TYPO3 extension catalogues official TYPO3 Core changelogs, converts them to
    ```
 
 2. **Run Schema Migration**:
-   Update your database schema via the TYPO3 Install Tool, TYPO3 Backend, or CLI:
+   Update your database schema via CLI, Install Tool, or Backend:
    ```bash
    vendor/bin/typo3 extension:setup
    ```
 
 3. **Import TYPO3 Changelogs**:
-   Process and import the RST files into the TYPO3 database:
+   Process and import the ReST files into the TYPO3 database:
    ```bash
    vendor/bin/typo3 changelog:mcp:prepare
    ```
 
----
+## Usage and Integration
 
-## Usage & Integration
-
-### 1. STDIO Transport (e.g. for IDE integrations)
-Run the MCP server locally over standard input/output:
+### 1. STDIO Transport (IDE integrations)
+Run the MCP server locally over standard input and output:
 ```bash
 vendor/bin/typo3 changelog:mcp:server
 ```
@@ -55,21 +58,19 @@ vendor/bin/typo3 changelog:mcp:server
 ### 2. HTTP Transport (via TYPO3 Reactions)
 The extension implements `ChangelogMcpReaction` to expose the MCP server over an HTTP endpoint under TYPO3 Reactions.
 
-To use the HTTP transport, you must configure a Reaction record in the TYPO3 Backend:
-1. Go to **Integrations** -> **Reactions** in the backend module menu.
+To use the HTTP transport, configure a Reaction record in the TYPO3 Backend:
+1. Navigate to **Integrations** > **Reactions** in the backend module menu.
 2. Click to create a new Reaction record.
 3. Select the **TYPO3 Changelog MCP** reaction type.
 4. Provide a description and set up the secret API key.
-5. Save the record and use the generated Reaction ID (UUID, e.g., `a7279da8-56c1-4642-8248-74668bd50a82`) for your requests.
+5. Save the record and use the generated Reaction ID (UUID) for your requests.
 
----
+## Development and Testing
 
-## Development & Testing
-
-You can manually test the HTTP/JSON-RPC communication using `curl`.
+You can test the HTTP JSON-RPC communication using `curl`.
 
 ### Step 1: Initialize Session
-Send an `initialize` request to the reaction endpoint to start an MCP session. Make sure to replace the endpoint URL, `API_SECRET`, and reaction ID with your actual values:
+Send an `initialize` request to the reaction endpoint to start an MCP session:
 
 ```bash
 curl -i -X POST "https://typo3143.ddev.site/typo3/reaction/a7279da8-56c1-4642-8248-74668bd50a82" \
@@ -91,7 +92,7 @@ curl -i -X POST "https://typo3143.ddev.site/typo3/reaction/a7279da8-56c1-4642-82
       }'
 ```
 
-*Note: The response will contain the `Mcp-Session-Id` header (e.g., `Mcp-Session-Id: 250fd04a-9a0c-48d3-b6e2-99e3d9c8ebca`), which you must use in subsequent requests.*
+*Note: The response will contain the `Mcp-Session-Id` header, which you must supply in subsequent requests.*
 
 ### Step 2: Call MCP Tool
 Query the `search_changelogs` tool with a search query using the session ID retrieved from the initialization step:
@@ -116,7 +117,7 @@ curl -X POST "https://typo3143.ddev.site/typo3/reaction/a7279da8-56c1-4642-8248-
 ```
 
 ### Step 3: MCP Client Configuration
-To connect an MCP client (such as Claude Desktop, Windsurf, or Antigravity) to this server over HTTP, you can add this block to your `mcp_config.json`:
+To connect an MCP client (such as Claude Desktop, Windsurf, or Antigravity) to this server over HTTP, add this block to your `mcp_config.json`:
 
 ```json
 {
