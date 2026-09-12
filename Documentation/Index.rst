@@ -13,7 +13,7 @@ MCP for TYPO3 changelogs
     stefanfroemken/changelog-mcp
 
 :Version:
-    0.0.2
+    0.0.3
 
 :Language:
     en
