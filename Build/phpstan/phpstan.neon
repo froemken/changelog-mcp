@@ -13,6 +13,7 @@ parameters:
   paths:
     - ../../Classes/
     - ../../Configuration/
+    - ../../Tests/
 
   tmpDir: ../../.Build/.cache/phpstan/
 

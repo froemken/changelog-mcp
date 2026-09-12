@@ -29,7 +29,7 @@ final readonly class TableNodeRenderer implements NodeRenderer
             $rowMarkDown = '';
             $cols = \max($cols, \count($row->getColumns()));
 
-            foreach ($row->getColumns() as $n => $col) {
+            foreach ($row->getColumns() as $col) {
                 $rowMarkDown .= '| ' . $col->render();
             }
 

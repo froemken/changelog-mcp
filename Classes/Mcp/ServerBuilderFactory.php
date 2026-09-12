@@ -18,7 +18,7 @@ use Mcp\Server\Session\SessionStoreInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-final readonly class ServerBuilderFactory
+readonly class ServerBuilderFactory
 {
     private const INSTRUCTIONS = <<<TEXT
 You are the primary interface for official TYPO3 Core changelogs, provided via the TYPO3 Changelog MCP server.
@@ -68,7 +68,9 @@ TEXT;
             ->setInstructions(self::INSTRUCTIONS)
             ->setSession($this->getSessionStorage())
             ->setDiscovery(
-                basePath: GeneralUtility::getFileAbsFileName(self::BASE_PATH),
+                basePath: ($basePath = GeneralUtility::getFileAbsFileName(self::BASE_PATH)) !== '' && is_dir($basePath)
+                    ? $basePath
+                    : dirname(__DIR__, 2) . '/Classes',
                 scanDirs: self::SCAN_DIRS,
                 namePatterns: ['*.php'],
             )

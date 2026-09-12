@@ -35,7 +35,7 @@ final readonly class FindChangelogTool
     public function __construct(
         private ChangelogRepository $changelogRepository,
     ) {
-        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
+        $this->logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(self::class);
     }
 
     /**
@@ -48,8 +48,7 @@ final readonly class FindChangelogTool
     public function search(
         #[Schema(description: 'Search for changelogs. ALWAYS use the results to identify the correct UID, then IMMEDIATELY fetch the full content using the show_changelog tool with the UID for details and migration instructions. Never provide advice based solely on titles.')] string $query = '',
         #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version to upgrade to or target (e.g. "10", "11.5", "12.4", "13", "14"). The search will return matching changelogs up to this version.')] ?string $version = null,
-        #[CompletionProvider(enum: ChangelogEnum::class)]
-        #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
+        #[CompletionProvider(enum: ChangelogEnum::class)] #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
     ): CallToolResult {
         $this->logger->info(sprintf('Search for Changelogs: [Query: %s] [Version: %s]', $query, $version));
 

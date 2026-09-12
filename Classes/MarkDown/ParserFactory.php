@@ -49,6 +49,7 @@ class ParserFactory
         $configuration->setIgnoreInvalidReferences(true);
 
         // Pre configure "md" formatter
+        // @phpstan-ignore argument.type
         $configuration->setOutputFormat('md');
 
         // Set file extension
@@ -72,9 +73,11 @@ class ParserFactory
         $configuration->setTheme('Default');
 
         // Add the template path to our twig templates to build "md" files
-        $configuration->addCustomTemplateDir(
-            GeneralUtility::getFileAbsFileName(self::TEMPLATE_PATH),
-        );
+        $templatePath = GeneralUtility::getFileAbsFileName(self::TEMPLATE_PATH);
+        if ($templatePath === '' || !is_dir($templatePath)) {
+            $templatePath = dirname(__DIR__, 2) . '/Resources/Private/Templates';
+        }
+        $configuration->addCustomTemplateDir($templatePath);
 
         return $configuration;
     }
@@ -95,6 +98,7 @@ class ParserFactory
                 new GenericReference('csp'),
                 new GenericReference('css'),
                 new GenericReference('directory'),
+                new GenericReference('doc'),
                 new GenericReference('EXT'),
                 new GenericReference('file'),
                 new GenericReference('fluid'),
@@ -110,6 +114,7 @@ class ParserFactory
                 new GenericReference('php'),
                 new GenericReference('PHP'),
                 new GenericReference('quote'),
+                new GenericReference('ref'),
                 new GenericReference('samp'),
                 new GenericReference('shell'),
                 new GenericReference('sql'),

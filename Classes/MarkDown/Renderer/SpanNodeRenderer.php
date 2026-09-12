@@ -75,19 +75,24 @@ final class SpanNodeRenderer extends BaseSpanNodeRenderer
     /** @param mixed[] $value */
     public function reference(ResolvedReference $reference, array $value): string
     {
-        $text = (bool)$value['text'] ? $value['text'] : $reference->getTitle();
-        $url  = $reference->getUrl();
-
-        if ($value['anchor'] !== '') {
-            $url .= $value['anchor'];
-        }
-
-        if ($text === null) {
-            $text = '';
-        }
-
+        $target = $reference->getTitle();
         $attributes = $reference->getAttributes();
         $role = $attributes['role'] ?? '';
+
+        if (($value['text'] ?? '') !== '') {
+            $text = trim((string)$value['text']);
+            if (!in_array($target, [null, '', $text], true) && ($role === 'doc' || $role === 'ref')) {
+                $text .= ' (' . basename($target) . ')';
+            }
+        } else {
+            $text = $target ?? '';
+        }
+
+        $url = $reference->getUrl();
+
+        if (!empty($value['anchor'])) {
+            $url .= (string)$value['anchor'];
+        }
 
         if ($url === null || $url === '') {
             if ($role !== '' && $role !== 'issue') {

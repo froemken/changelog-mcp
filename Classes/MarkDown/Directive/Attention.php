@@ -11,30 +11,15 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
-use Doctrine\RST\Directives\Directive;
-use Doctrine\RST\Nodes\Node;
-use Doctrine\RST\Parser;
-
-/**
- * Add index to document
- *
- * .. index:: PHP-API, ext:extbase
- */
-final class Attention extends Directive
+final class Attention extends AbstractAdmonitionDirective
 {
     public function getName(): string
     {
         return 'attention';
     }
 
-    /**
-     * @param string[] $options
-     */
-    public function process(
-        Parser $parser,
-        ?Node $node,
-        string $variable,
-        string $data,
-        array $options,
-    ): void {}
+    protected function getAlertTag(): string
+    {
+        return 'CAUTION';
+    }
 }

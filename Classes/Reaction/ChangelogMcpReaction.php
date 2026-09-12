@@ -11,9 +11,14 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Reaction;
 
-use Mcp\Server;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
+use Mcp\Server\Transport\StreamableHttpTransport;
+use Mcp\Server\Transport\TransportInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Log\LoggerInterface;
 use StefanFroemken\ChangelogMcp\Mcp\ServerBuilderFactory;
 use Symfony\Component\Uid\Uuid;
@@ -59,6 +64,9 @@ class ChangelogMcpReaction implements ReactionInterface
         return 'module-install-environment';
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function react(
         ServerRequestInterface $request,
         array $payload,
@@ -90,7 +98,7 @@ class ChangelogMcpReaction implements ReactionInterface
             $endpointUrl = $requestUrl . '?sessionId=' . $sessionId;
 
             echo "event: endpoint\n";
-            echo "data: " . $endpointUrl . "\n\n";
+            echo 'data: ' . $endpointUrl . "\n\n";
             flush();
 
             $startTime = time();
@@ -105,7 +113,7 @@ class ChangelogMcpReaction implements ReactionInterface
                     if (!empty($queue)) {
                         foreach ($queue as $item) {
                             echo "event: message\n";
-                            echo "data: " . $item['message'] . "\n\n";
+                            echo 'data: ' . $item['message'] . "\n\n";
                             flush();
                         }
                         $data['_mcp']['outgoing_queue'] = [];
@@ -138,7 +146,7 @@ class ChangelogMcpReaction implements ReactionInterface
                 $sessionData = json_decode(file_get_contents($sessionPath), true) ?: [];
                 $sessionData['_mcp']['outgoing_queue'][] = [
                     'message' => $body,
-                    'context' => ['type' => 'response']
+                    'context' => ['type' => 'response'],
                 ];
                 file_put_contents($sessionPath, json_encode($sessionData));
             }
@@ -151,25 +159,31 @@ class ChangelogMcpReaction implements ReactionInterface
         return $response;
     }
 
-    private function createHttpTransport(ServerRequestInterface $request): Server\Transport\StreamableHttpTransport
+    /**
+     * @return TransportInterface<ResponseInterface>
+     */
+    protected function createHttpTransport(ServerRequestInterface $request): TransportInterface
     {
-        return new Server\Transport\StreamableHttpTransport(
+        return new StreamableHttpTransport(
             request: $request,
             logger: $this->logger,
             middleware: $this->getHttpTransportMiddlewares($request),
         );
     }
 
+    /**
+     * @return list<MiddlewareInterface>
+     */
     private function getHttpTransportMiddlewares(ServerRequestInterface $request): array
     {
         return [
-            new Server\Transport\Http\Middleware\ProtocolVersionMiddleware(),
-            new Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware([
+            new ProtocolVersionMiddleware(),
+            new DnsRebindingProtectionMiddleware([
                 $this->getNormalizedParams($request)->getHttpHost(),
                 'localhost',
                 '127.0.0.1',
             ]),
-            new Server\Transport\Http\Middleware\CorsMiddleware(
+            new CorsMiddleware(
                 allowedOrigins: ['*'],
                 allowedMethods: ['GET', 'POST', 'OPTIONS'],
                 allowedHeaders: [
@@ -177,9 +191,9 @@ class ChangelogMcpReaction implements ReactionInterface
                     'Authorization',
                     'Content-Type',
                     'Last-Event-ID',
-                    Server\Transport\StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
-                    Server\Transport\StreamableHttpTransport::SESSION_HEADER,
-                ]
+                    StreamableHttpTransport::PROTOCOL_VERSION_HEADER,
+                    StreamableHttpTransport::SESSION_HEADER,
+                ],
             ),
         ];
     }

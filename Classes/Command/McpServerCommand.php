@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace StefanFroemken\ChangelogMcp\Command;
 
 use Mcp\Server\Transport\StdioTransport;
+use Mcp\Server\Transport\TransportInterface;
 use StefanFroemken\ChangelogMcp\Mcp\ServerBuilderFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -24,8 +25,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 class McpServerCommand extends Command
 {
+    /**
+     * @param TransportInterface<mixed>|null $transport
+     */
     public function __construct(
         private readonly ServerBuilderFactory $serverBuilderFactory,
+        private readonly ?TransportInterface $transport = null,
     ) {
         parent::__construct();
     }
@@ -37,7 +42,7 @@ class McpServerCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $server = $this->serverBuilderFactory->createServer();
-        $server->run(new StdioTransport());
+        $server->run($this->transport ?? new StdioTransport());
 
         return Command::SUCCESS;
     }

@@ -11,30 +11,31 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\MarkDown\Directive;
 
-use Doctrine\RST\Directives\Directive;
+use Doctrine\RST\Directives\SubDirective;
 use Doctrine\RST\Nodes\Node;
 use Doctrine\RST\Parser;
+use StefanFroemken\ChangelogMcp\MarkDown\Node\AdmonitionNode;
 
-/**
- * Add index to document
- *
- * .. index:: PHP-API, ext:extbase
- */
-final class VersionAdded extends Directive
+final class VersionAdded extends SubDirective
 {
     public function getName(): string
     {
         return 'versionadded';
     }
 
-    /**
-     * @param string[] $options
-     */
-    public function process(
+    public function processSub(
         Parser $parser,
-        ?Node $node,
+        ?Node $document,
         string $variable,
         string $data,
         array $options,
-    ): void {}
+    ): ?Node {
+        if (!$document instanceof Node) {
+            return null;
+        }
+
+        $header = '> **Added in version ' . trim($data) . ":**\n";
+
+        return new AdmonitionNode($document, $header);
+    }
 }
