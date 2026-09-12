@@ -27,7 +27,7 @@ final class McpServerCommandTest extends UnitTestCase
     public function executeRunsServerWithStdioTransport(): void
     {
         $factoryMock = $this->createMock(ServerBuilderFactory::class);
-        $protocolMock = $this->createMock(Protocol::class);
+        $protocolMock = self::createStub(Protocol::class);
         $server = new Server($protocolMock);
 
         $factoryMock->expects($this->once())

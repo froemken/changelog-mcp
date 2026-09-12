@@ -24,8 +24,8 @@ final class SpanNodeRendererTest extends UnitTestCase
     #[Test]
     public function inlineFormattingMethodsDelegateToTemplateRenderer(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
-        $spanNodeMock = $this->createMock(SpanNode::class);
+        $environmentMock = self::createStub(Environment::class);
+        $spanNodeMock = self::createStub(SpanNode::class);
         $templateRendererMock = $this->createMock(TemplateRenderer::class);
 
         $templateRendererMock->expects($this->exactly(5))
@@ -51,8 +51,8 @@ final class SpanNodeRendererTest extends UnitTestCase
     #[Test]
     public function linkDelegatesToTemplateRenderer(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
-        $spanNodeMock = $this->createMock(SpanNode::class);
+        $environmentMock = self::createStub(Environment::class);
+        $spanNodeMock = self::createStub(SpanNode::class);
         $templateRendererMock = $this->createMock(TemplateRenderer::class);
 
         $templateRendererMock->expects($this->once())
@@ -72,8 +72,8 @@ final class SpanNodeRendererTest extends UnitTestCase
     #[Test]
     public function referenceWithUrlRendersLink(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
-        $spanNodeMock = $this->createMock(SpanNode::class);
+        $environmentMock = self::createStub(Environment::class);
+        $spanNodeMock = self::createStub(SpanNode::class);
         $templateRendererMock = $this->createMock(TemplateRenderer::class);
 
         $templateRendererMock->expects($this->once())
@@ -97,8 +97,8 @@ final class SpanNodeRendererTest extends UnitTestCase
     #[Test]
     public function referenceWithoutUrlAndDocRoleRendersLiteralWithBasename(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
-        $spanNodeMock = $this->createMock(SpanNode::class);
+        $environmentMock = self::createStub(Environment::class);
+        $spanNodeMock = self::createStub(SpanNode::class);
         $templateRendererMock = $this->createMock(TemplateRenderer::class);
 
         $templateRendererMock->expects($this->once())
@@ -117,8 +117,8 @@ final class SpanNodeRendererTest extends UnitTestCase
     #[Test]
     public function referenceWithoutUrlAndRefRoleWithoutCustomTextRendersTargetAsLiteral(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
-        $spanNodeMock = $this->createMock(SpanNode::class);
+        $environmentMock = self::createStub(Environment::class);
+        $spanNodeMock = self::createStub(SpanNode::class);
         $templateRendererMock = $this->createMock(TemplateRenderer::class);
 
         $templateRendererMock->expects($this->once())

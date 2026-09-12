@@ -24,7 +24,7 @@ final class ServerBuilderFactoryTest extends UnitTestCase
     #[Test]
     public function createServerReturnsConfiguredServerInstance(): void
     {
-        $containerMock = $this->createMock(ContainerInterface::class);
+        $containerMock = self::createStub(ContainerInterface::class);
         GeneralUtility::setContainer($containerMock);
 
         $factory = new ServerBuilderFactory();

@@ -69,8 +69,8 @@ final class PrepareChangelogCommandTest extends UnitTestCase
     #[Test]
     public function executeInVerboseModePrintsIndividualFileNames(): void
     {
-        $repositoryMock = $this->createMock(ChangelogRepository::class);
-        $serviceMock = $this->createMock(ChangelogService::class);
+        $repositoryMock = self::createStub(ChangelogRepository::class);
+        $serviceMock = self::createStub(ChangelogService::class);
 
         $file1 = '/path/to/14.0/feature-999.rst';
         $serviceMock->method('getAllOriginalTypo3ChangelogFiles')->willReturn([$file1]);

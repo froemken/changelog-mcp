@@ -39,8 +39,8 @@ final class OtherDirectivesTest extends UnitTestCase
         $directive = new Confval();
         self::assertSame('confval', $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(Node::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn('Option description');
 
         $node = $directive->processSub($parserMock, $documentMock, '', 'my.config.key', []);
@@ -56,8 +56,8 @@ final class OtherDirectivesTest extends UnitTestCase
         $directive = new Container();
         self::assertSame('container', $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(Node::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(Node::class);
 
         $node = $directive->processSub($parserMock, $documentMock, '', '', []);
         self::assertSame($documentMock, $node);
@@ -66,7 +66,7 @@ final class OtherDirectivesTest extends UnitTestCase
     #[Test]
     public function noopDirectivesExecuteWithoutError(): void
     {
-        $parserMock = $this->createMock(Parser::class);
+        $parserMock = self::createStub(Parser::class);
 
         $contents = new Contents();
         self::assertSame('contents', $contents->getName());
@@ -91,8 +91,8 @@ final class OtherDirectivesTest extends UnitTestCase
         $directive = new Sidebar();
         self::assertSame('sidebar', $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(Node::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn('Sidebar body text');
 
         $node = $directive->processSub($parserMock, $documentMock, '', 'My Sidebar', []);
@@ -112,7 +112,7 @@ final class OtherDirectivesTest extends UnitTestCase
 
         $documentMock = $this->createMock(DocumentNode::class);
         $nodeFactoryMock = $this->createMock(NodeFactory::class);
-        $parserMock = $this->createMock(Parser::class);
+        $parserMock = self::createStub(Parser::class);
 
         $parserMock->method('getDocument')->willReturn($documentMock);
         $parserMock->method('getNodeFactory')->willReturn($nodeFactoryMock);
@@ -127,7 +127,7 @@ final class OtherDirectivesTest extends UnitTestCase
             ->method('addHeaderNode')
             ->with($rawNode);
 
-        $nodeMock = $this->createMock(Node::class);
+        $nodeMock = self::createStub(Node::class);
         $documentMock->expects($this->once())
             ->method('addNode')
             ->with($nodeMock);
@@ -141,8 +141,8 @@ final class OtherDirectivesTest extends UnitTestCase
         $directive = new VersionAdded();
         self::assertSame('versionadded', $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(Node::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn('This method was introduced.');
 
         $node = $directive->processSub($parserMock, $documentMock, '', '14.0', []);
@@ -160,14 +160,14 @@ final class OtherDirectivesTest extends UnitTestCase
         $directive = new CsvTable();
         self::assertSame('csv-table', $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(DocumentNode::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(DocumentNode::class);
         $nodeFactoryMock = $this->createMock(NodeFactory::class);
 
         $parserMock->method('getDocument')->willReturn($documentMock);
         $parserMock->method('getNodeFactory')->willReturn($nodeFactoryMock);
 
-        $inputNodeMock = $this->createMock(Node::class);
+        $inputNodeMock = self::createStub(Node::class);
         $inputNodeMock->method('getValue')->willReturn("\"Val 1\", \"Val 2\"\n\"Val 3\", \"Val 4\"");
 
         $nodeFactoryMock->expects($this->once())

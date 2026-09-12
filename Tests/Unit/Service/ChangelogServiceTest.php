@@ -57,7 +57,7 @@ RST;
 
         file_put_contents($tempPath, $rstSource);
 
-        $documentMock = $this->createMock(DocumentNode::class);
+        $documentMock = self::createStub(DocumentNode::class);
         $documentMock->method('render')->willReturn("# Breaking: #12345 - Removed legacy feature\n\nSome description.");
 
         $parserMock = $this->createMock(Parser::class);
@@ -90,7 +90,7 @@ RST;
     #[Test]
     public function getAllOriginalTypo3ChangelogFilesReturnsArray(): void
     {
-        $parserFactoryMock = $this->createMock(ParserFactory::class);
+        $parserFactoryMock = self::createStub(ParserFactory::class);
         $service = new ChangelogService($parserFactoryMock);
 
         $files = $service->getAllOriginalTypo3ChangelogFiles();

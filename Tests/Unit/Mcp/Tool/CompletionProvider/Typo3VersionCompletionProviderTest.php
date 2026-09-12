@@ -30,7 +30,7 @@ final class Typo3VersionCompletionProviderTest extends UnitTestCase
     #[Test]
     public function getCompletionsReturnsEmptyArrayForEmptyOrNullInput(): void
     {
-        $connectionPool = $this->createMock(ConnectionPool::class);
+        $connectionPool = self::createStub(ConnectionPool::class);
         $provider = new Typo3VersionCompletionProvider($connectionPool);
 
         self::assertSame([], $provider->getCompletions(null));
@@ -40,14 +40,14 @@ final class Typo3VersionCompletionProviderTest extends UnitTestCase
     #[Test]
     public function getCompletionsWithMajorVersionQueriesMajorColumnAndPrependsMajor(): void
     {
-        GeneralUtility::addInstance(DeletedRestriction::class, $this->createMock(DeletedRestriction::class));
-        GeneralUtility::addInstance(HiddenRestriction::class, $this->createMock(HiddenRestriction::class));
+        GeneralUtility::addInstance(DeletedRestriction::class, self::createStub(DeletedRestriction::class));
+        GeneralUtility::addInstance(HiddenRestriction::class, self::createStub(HiddenRestriction::class));
 
         $connectionPool = $this->createMock(ConnectionPool::class);
-        $queryBuilder = $this->createMock(QueryBuilder::class);
-        $restrictions = $this->createMock(QueryRestrictionContainerInterface::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
+        $restrictions = self::createStub(QueryRestrictionContainerInterface::class);
         $expressionBuilder = $this->createMock(ExpressionBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result = self::createStub(Result::class);
 
         $restrictions->method('removeAll')->willReturnSelf();
         $restrictions->method('add')->willReturnSelf();
@@ -82,14 +82,14 @@ final class Typo3VersionCompletionProviderTest extends UnitTestCase
     #[Test]
     public function getCompletionsWithMinorVersionQueriesVersionStringColumn(): void
     {
-        GeneralUtility::addInstance(DeletedRestriction::class, $this->createMock(DeletedRestriction::class));
-        GeneralUtility::addInstance(HiddenRestriction::class, $this->createMock(HiddenRestriction::class));
+        GeneralUtility::addInstance(DeletedRestriction::class, self::createStub(DeletedRestriction::class));
+        GeneralUtility::addInstance(HiddenRestriction::class, self::createStub(HiddenRestriction::class));
 
         $connectionPool = $this->createMock(ConnectionPool::class);
-        $queryBuilder = $this->createMock(QueryBuilder::class);
-        $restrictions = $this->createMock(QueryRestrictionContainerInterface::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
+        $restrictions = self::createStub(QueryRestrictionContainerInterface::class);
         $expressionBuilder = $this->createMock(ExpressionBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result = self::createStub(Result::class);
 
         $restrictions->method('removeAll')->willReturnSelf();
         $restrictions->method('add')->willReturnSelf();

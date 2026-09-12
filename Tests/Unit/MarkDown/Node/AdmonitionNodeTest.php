@@ -21,7 +21,7 @@ final class AdmonitionNodeTest extends UnitTestCase
     #[Test]
     public function renderFormatsSingleLineContent(): void
     {
-        $documentMock = $this->createMock(Node::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn('Be careful when updating.');
 
         $node = new AdmonitionNode($documentMock, "> [!WARNING]\n");
@@ -33,7 +33,7 @@ final class AdmonitionNodeTest extends UnitTestCase
     #[Test]
     public function renderFormatsMultiLineContentWithEmptyLines(): void
     {
-        $documentMock = $this->createMock(Node::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn("First paragraph.\n\nSecond paragraph line 1.\nSecond paragraph line 2.");
 
         $node = new AdmonitionNode($documentMock, "> [!NOTE]\n");

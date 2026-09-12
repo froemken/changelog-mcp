@@ -33,7 +33,7 @@ final class MarkDownFormatTest extends UnitTestCase
     #[Test]
     public function getFileExtensionReturnsMd(): void
     {
-        $templateRenderer = $this->createMock(TemplateRenderer::class);
+        $templateRenderer = self::createStub(TemplateRenderer::class);
         $format = new MarkDownFormat($templateRenderer);
 
         self::assertSame('md', $format->getFileExtension());
@@ -42,7 +42,7 @@ final class MarkDownFormatTest extends UnitTestCase
     #[Test]
     public function getDirectivesReturnsRegisteredDirectives(): void
     {
-        $templateRenderer = $this->createMock(TemplateRenderer::class);
+        $templateRenderer = self::createStub(TemplateRenderer::class);
         $format = new MarkDownFormat($templateRenderer);
 
         $directives = $format->getDirectives();
@@ -53,7 +53,7 @@ final class MarkDownFormatTest extends UnitTestCase
     #[Test]
     public function getNodeRendererFactoriesRegistersAllRequiredNodes(): void
     {
-        $templateRenderer = $this->createMock(TemplateRenderer::class);
+        $templateRenderer = self::createStub(TemplateRenderer::class);
         $format = new MarkDownFormat($templateRenderer);
 
         $factories = $format->getNodeRendererFactories();

@@ -53,8 +53,8 @@ final class AdmonitionDirectivesTest extends UnitTestCase
     ): void {
         self::assertSame($expectedName, $directive->getName());
 
-        $parserMock = $this->createMock(Parser::class);
-        $documentMock = $this->createMock(Node::class);
+        $parserMock = self::createStub(Parser::class);
+        $documentMock = self::createStub(Node::class);
         $documentMock->method('render')->willReturn('Test admonition content');
 
         $node = $directive->processSub($parserMock, $documentMock, '', '', []);
@@ -85,7 +85,7 @@ final class AdmonitionDirectivesTest extends UnitTestCase
     #[DataProvider('admonitionInstancesDataProvider')]
     public function processSubReturnsNullWhenDocumentIsNull(SubDirective $directive): void
     {
-        $parserMock = $this->createMock(Parser::class);
+        $parserMock = self::createStub(Parser::class);
         $result = $directive->processSub($parserMock, null, '', '', []);
 
         self::assertNull($result);

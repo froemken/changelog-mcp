@@ -39,8 +39,8 @@ final class ChangelogMcpReactionTest extends UnitTestCase
     public function reactHandlesPostRequestAndRunsServer(): void
     {
         $factoryMock = $this->createMock(ServerBuilderFactory::class);
-        $loggerMock = $this->createMock(LoggerInterface::class);
-        $protocolMock = $this->createMock(Protocol::class);
+        $loggerMock = self::createStub(LoggerInterface::class);
+        $protocolMock = self::createStub(Protocol::class);
         $server = new Server($protocolMock);
 
         $factoryMock->expects($this->once())
@@ -54,13 +54,13 @@ final class ChangelogMcpReactionTest extends UnitTestCase
         $transportMock->expects($this->once())->method('listen')->willReturn($expectedResponse);
         $transportMock->expects($this->once())->method('close');
 
-        $normalizedParamsMock = $this->createMock(NormalizedParams::class);
+        $normalizedParamsMock = self::createStub(NormalizedParams::class);
         $normalizedParamsMock->method('getHttpHost')->willReturn('localhost');
 
         $streamMock = $this->createMock(StreamInterface::class);
         $streamMock->expects($this->once())->method('rewind');
 
-        $requestMock = $this->createMock(ServerRequestInterface::class);
+        $requestMock = self::createStub(ServerRequestInterface::class);
         $requestMock->method('getMethod')->willReturn('POST');
         $requestMock->method('getBody')->willReturn($streamMock);
         $requestMock->method('getQueryParams')->willReturn([]);

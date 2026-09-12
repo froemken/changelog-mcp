@@ -33,7 +33,7 @@ final class GenericReferenceTest extends UnitTestCase
     #[Test]
     public function resolveIssueConstructsForgeUrl(): void
     {
-        $environmentMock = $this->createMock(Environment::class);
+        $environmentMock = self::createStub(Environment::class);
         $ref = new GenericReference('issue');
 
         $resolved = $ref->resolve($environmentMock, '12345');
@@ -61,7 +61,7 @@ final class GenericReferenceTest extends UnitTestCase
     #[DataProvider('nonIssueRolesDataProvider')]
     public function resolveNonIssueRolesReturnsNullUrlAndSetsRoleAttribute(string $role, string $data): void
     {
-        $environmentMock = $this->createMock(Environment::class);
+        $environmentMock = self::createStub(Environment::class);
         $ref = new GenericReference($role);
 
         $resolved = $ref->resolve($environmentMock, $data);

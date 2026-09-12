@@ -79,7 +79,7 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function documentNodeRendererRendersDocumentWrapper(): void
     {
-        $environment = $this->createMock(Environment::class);
+        $environment = self::createStub(Environment::class);
         $document = new DocumentNode($environment);
 
         $templateRenderer = $this->createMock(TemplateRenderer::class);
@@ -130,7 +130,7 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function paragraphNodeRendererDelegatesToTemplate(): void
     {
-        $spanNode = $this->createMock(SpanNode::class);
+        $spanNode = self::createStub(SpanNode::class);
         $paragraphNode = new ParagraphNode($spanNode);
         $templateRenderer = $this->createMock(TemplateRenderer::class);
         $templateRenderer->expects($this->once())
@@ -145,7 +145,7 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function quoteNodeRendererPrefixesLinesWithGreaterThan(): void
     {
-        $innerNode = $this->createMock(DocumentNode::class);
+        $innerNode = self::createStub(DocumentNode::class);
         $innerNode->method('render')->willReturn("Line 1\nLine 2");
 
         $quoteNode = new QuoteNode($innerNode);
@@ -176,9 +176,9 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function tableNodeRendererRendersTablePipeFormat(): void
     {
-        $col1 = $this->createMock(Node::class);
+        $col1 = self::createStub(Node::class);
         $col1->method('render')->willReturn('Cell 1');
-        $col2 = $this->createMock(Node::class);
+        $col2 = self::createStub(Node::class);
         $col2->method('render')->willReturn('Cell 2');
 
         $row = new class ($col1, $col2) {
@@ -201,7 +201,7 @@ final class NodeRenderersTest extends UnitTestCase
             }
         };
 
-        $tableNode = $this->createMock(TableNode::class);
+        $tableNode = self::createStub(TableNode::class);
         $tableNode->method('getData')->willReturn([$row]);
 
         $renderer = new TableNodeRenderer($tableNode);
@@ -211,7 +211,7 @@ final class NodeRenderersTest extends UnitTestCase
     #[Test]
     public function titleNodeRendererComputesIndentationAndOverridesForChangelogTitles(): void
     {
-        $titleNodeLevel2 = $this->createMock(TitleNode::class);
+        $titleNodeLevel2 = self::createStub(TitleNode::class);
         $titleNodeLevel2->method('getLevel')->willReturn(2);
         $titleNodeLevel2->method('getValueString')->willReturn('Description');
 
@@ -224,7 +224,7 @@ final class NodeRenderersTest extends UnitTestCase
         $renderer = new TitleNodeRenderer($titleNodeLevel2, $templateRenderer1);
         self::assertSame("## Description\n", $renderer->render());
 
-        $titleNodeChangelog = $this->createMock(TitleNode::class);
+        $titleNodeChangelog = self::createStub(TitleNode::class);
         $titleNodeChangelog->method('getLevel')->willReturn(3);
         $titleNodeChangelog->method('getValueString')->willReturn('Breaking: #12345 - Removed hook');
 
