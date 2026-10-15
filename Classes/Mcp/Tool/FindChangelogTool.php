@@ -47,44 +47,34 @@ final readonly class FindChangelogTool
     #[McpTool(name: 'search_changelogs')]
     public function search(
         #[Schema(description: 'Search for changelogs. ALWAYS use the results to identify the correct UID, then IMMEDIATELY fetch the full content using the show_changelog tool with the UID for details and migration instructions. Never provide advice based solely on titles.')] string $query = '',
-        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Target TYPO3 version to upgrade to or target (e.g. "10", "11.5", "12.4", "13", "14"). The search will return matching changelogs up to this version.')] ?string $version = null,
+        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Lower TYPO3 version boundary (e.g. "10"). Changelogs from this version onwards are included. To query exactly one version, set both fromVersion and toVersion to the same value (e.g. "14").')] ?string $fromVersion = null,
+        #[CompletionProvider(provider: Typo3VersionCompletionProvider::class)] #[Schema(description: 'Upper TYPO3 version boundary / target version (e.g. "13" or "14"). Changelogs up to this version are included. To query exactly one version, set both fromVersion and toVersion to the same value (e.g. "14").')] ?string $toVersion = null,
         #[CompletionProvider(enum: ChangelogEnum::class)] #[Schema(description: 'Filter by TYPO3 change type. "breaking" (critical), "deprecation" (critical), "feature" (critical), or "important" (informational).')] ?string $type = null,
+        #[Schema(description: 'Maximum number of changelogs to return (1-100, default 50).')] int $limit = 50,
+        #[Schema(description: 'Offset for pagination (default 0).')] int $offset = 0,
     ): CallToolResult {
-        $this->logger->info(sprintf('Search for Changelogs: [Query: %s] [Version: %s]', $query, $version));
+        $boundedLimit = max(1, min(100, $limit));
+        $boundedOffset = max(0, $offset);
+        $this->logger->info(sprintf(
+            'Search for Changelogs: [Query: %s] [FromVersion: %s] [ToVersion: %s] [Type: %s] [Limit: %d] [Offset: %d]',
+            $query,
+            (string)$fromVersion,
+            (string)$toVersion,
+            (string)$type,
+            $boundedLimit,
+            $boundedOffset,
+        ));
 
-        $versionParam = $version === '' ? null : $version;
-        $queryParam = $query === '' ? null : $query;
+        $searchResults = $this->changelogRepository->getChangelogs(
+            $query === '' ? null : $query,
+            $fromVersion === '' ? null : $fromVersion,
+            $toVersion === '' ? null : $toVersion,
+            $type === '' ? null : $type,
+            $boundedLimit,
+            $boundedOffset,
+        );
 
-        $searchResults = $this->changelogRepository->getChangelogs($queryParam, $versionParam, $type);
-
-        $text = 'I found ' . count($searchResults) . ' matching changelogs:' . PHP_EOL . PHP_EOL;
-        foreach ($searchResults as $searchResult) {
-            $text .= sprintf(
-                '- [%s] %s (URI: typo3://changelog/%d, Type: %s, Version: %s)' . PHP_EOL,
-                $searchResult['change_type'],
-                $searchResult['title'],
-                $searchResult['uid'],
-                $searchResult['change_type'],
-                $searchResult['version_string'],
-            );
-            if (!empty($searchResult['summary'])) {
-                $text .= '  Summary: ' . str_replace("\n", "\n  ", trim($searchResult['summary'])) . PHP_EOL . PHP_EOL;
-            }
-        }
-
-        $content = [
-            new TextContent($text),
-        ];
-
-        foreach ($searchResults as $searchResult) {
-            $content[] = EmbeddedResource::fromText(
-                uri: 'typo3://changelog/' . $searchResult['uid'],
-                text: $searchResult['title'],
-                mimeType: 'text/markdown',
-            );
-        }
-
-        return new CallToolResult($content);
+        return $this->buildCallToolResult($searchResults['totalCount'], $boundedOffset, $searchResults['items']);
     }
 
     /**
@@ -106,5 +96,40 @@ final readonly class FindChangelogTool
         return new CallToolResult([
             new TextContent($content),
         ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     */
+    private function buildCallToolResult(int $totalCount, int $offset, array $items): CallToolResult
+    {
+        $start = $items === [] ? 0 : $offset + 1;
+        $end = $items === [] ? 0 : $offset + count($items);
+        $text = sprintf('Found %d matching changelogs (showing %d-%d):', $totalCount, $start, $end) . PHP_EOL . PHP_EOL;
+
+        foreach ($items as $item) {
+            $text .= sprintf(
+                '- [%s] %s (URI: typo3://changelog/%d, Type: %s, Version: %s)' . PHP_EOL,
+                $item['change_type'],
+                $item['title'],
+                $item['uid'],
+                $item['change_type'],
+                $item['version_string'],
+            );
+            if (!empty($item['summary'])) {
+                $text .= '  Summary: ' . str_replace("\n", "\n  ", trim((string)$item['summary'])) . PHP_EOL . PHP_EOL;
+            }
+        }
+
+        $content = [new TextContent($text)];
+        foreach ($items as $item) {
+            $content[] = EmbeddedResource::fromText(
+                uri: 'typo3://changelog/' . $item['uid'],
+                text: (string)$item['title'],
+                mimeType: 'text/markdown',
+            );
+        }
+
+        return new CallToolResult($content);
     }
 }

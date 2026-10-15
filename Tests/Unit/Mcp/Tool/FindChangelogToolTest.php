@@ -28,24 +28,27 @@ final class FindChangelogToolTest extends UnitTestCase
         $repositoryMock = $this->createMock(ChangelogRepository::class);
         $repositoryMock->expects($this->once())
             ->method('getChangelogs')
-            ->with('request', '14.0', 'breaking')
+            ->with('request', '13.0', '14.0', 'breaking', 50, 0)
             ->willReturn([
-                [
-                    'uid' => 101,
-                    'title' => 'ServerRequest changes',
-                    'change_type' => 'Breaking',
-                    'version_string' => '14.0',
-                    'summary' => 'Details about request changes',
+                'totalCount' => 1,
+                'items' => [
+                    [
+                        'uid' => 101,
+                        'title' => 'ServerRequest changes',
+                        'change_type' => 'Breaking',
+                        'version_string' => '14.0',
+                        'summary' => 'Details about request changes',
+                    ],
                 ],
             ]);
 
         $tool = new FindChangelogTool($repositoryMock);
-        $result = $tool->search('request', '14.0', 'breaking');
+        $result = $tool->search('request', '13.0', '14.0', 'breaking');
 
         $content = $result->content;
         self::assertCount(2, $content);
         self::assertInstanceOf(TextContent::class, $content[0]);
-        self::assertStringContainsString('I found 1 matching changelogs:', $content[0]->text);
+        self::assertStringContainsString('Found 1 matching changelogs (showing 1-1):', $content[0]->text);
         self::assertStringContainsString('typo3://changelog/101', $content[0]->text);
         self::assertStringContainsString('ServerRequest changes', $content[0]->text);
         self::assertStringContainsString('Summary: Details about request changes', $content[0]->text);
@@ -62,15 +65,68 @@ final class FindChangelogToolTest extends UnitTestCase
         $repositoryMock = $this->createMock(ChangelogRepository::class);
         $repositoryMock->expects($this->once())
             ->method('getChangelogs')
-            ->with(null, null, null)
-            ->willReturn([]);
+            ->with(null, null, null, null, 50, 0)
+            ->willReturn([
+                'totalCount' => 0,
+                'items' => [],
+            ]);
 
         $tool = new FindChangelogTool($repositoryMock);
-        $result = $tool->search('', '');
+        $result = $tool->search('', '', '');
 
         self::assertCount(1, $result->content);
         self::assertInstanceOf(TextContent::class, $result->content[0]);
-        self::assertStringContainsString('I found 0 matching changelogs:', $result->content[0]->text);
+        self::assertStringContainsString('Found 0 matching changelogs (showing 0-0):', $result->content[0]->text);
+    }
+
+    #[Test]
+    public function searchClampsLimitAndOffset(): void
+    {
+        $repositoryMock = $this->createMock(ChangelogRepository::class);
+        $repositoryMock->expects($this->once())
+            ->method('getChangelogs')
+            ->with('query', null, null, null, 100, 0)
+            ->willReturn([
+                'totalCount' => 0,
+                'items' => [],
+            ]);
+
+        $tool = new FindChangelogTool($repositoryMock);
+        $tool->search('query', null, null, null, 500, -10);
+    }
+
+    #[Test]
+    public function searchFormatsPaginationRangeCorrectly(): void
+    {
+        $repositoryMock = $this->createMock(ChangelogRepository::class);
+        $repositoryMock->expects($this->once())
+            ->method('getChangelogs')
+            ->with(null, null, null, null, 2, 2)
+            ->willReturn([
+                'totalCount' => 5,
+                'items' => [
+                    [
+                        'uid' => 103,
+                        'title' => 'Third entry',
+                        'change_type' => 'Feature',
+                        'version_string' => '14.0',
+                        'summary' => '',
+                    ],
+                    [
+                        'uid' => 104,
+                        'title' => 'Fourth entry',
+                        'change_type' => 'Feature',
+                        'version_string' => '14.0',
+                        'summary' => '',
+                    ],
+                ],
+            ]);
+
+        $tool = new FindChangelogTool($repositoryMock);
+        $result = $tool->search('', null, null, null, 2, 2);
+
+        self::assertInstanceOf(TextContent::class, $result->content[0]);
+        self::assertStringContainsString('Found 5 matching changelogs (showing 3-4):', $result->content[0]->text);
     }
 
     #[Test]

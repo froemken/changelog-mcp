@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace StefanFroemken\ChangelogMcp\Domain\Repository;
 
+use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use StefanFroemken\ChangelogMcp\Service\Changelog;
@@ -38,7 +39,7 @@ class ChangelogRepository implements LoggerAwareInterface
             self::TABLE,
             [
                 'title' => $changelog->getTitle(),
-                'change_type' => $changelog->getChangeType(),
+                'change_type' => ucfirst(strtolower($changelog->getChangeType())),
                 'version_string' => $changelog->getVersionString(),
                 'major_version' => $changelog->getMajorVersion(),
                 'issue_number' => $changelog->getIssueNumber(),
@@ -56,194 +57,52 @@ class ChangelogRepository implements LoggerAwareInterface
     }
 
     /**
-     * Retrieves changelogs based on search term, version, and type.
-     * @param string|null $prompt The search term(s)
-     * @param string|null $typo3Version The version (e.g., "14", "12.4", or "11.5.1")
-     * @param string|null $changeType The category (e.g., "breaking", "feature")
-     * @return array<int, array<string, mixed>> The scored and sorted search results
+     * Retrieves changelogs based on search term, version range, type, limit, and offset.
+     *
+     * @return array{totalCount: int, items: array<int, array<string, mixed>>}
      */
-    public function getChangelogs(?string $prompt, ?string $typo3Version = null, ?string $changeType = null): array
-    {
+    public function getChangelogs(
+        ?string $prompt,
+        ?string $fromVersion = null,
+        ?string $toVersion = null,
+        ?string $changeType = null,
+        int $limit = 50,
+        int $offset = 0,
+    ): array {
         $queryBuilder = $this->getQueryBuilder();
-        $constraints = [];
-        $words = [];
+        $words = $this->extractSearchWords($prompt);
+        $constraints = $this->buildSearchConstraints($queryBuilder, $words);
+        $constraints = array_merge($constraints, $this->buildVersionConstraints($queryBuilder, $fromVersion, $toVersion));
 
-        if ($prompt !== null && $prompt !== '') {
-            $rawWords = array_filter(explode(' ', $prompt));
-            $stopwords = [
-                'how', 'to', 'the', 'a', 'an', 'of', 'in', 'and', 'is', 'for', 'with', 'on', 'as', 'by', 'at', 'it', 'from',
-                'what', 'why', 'where', 'when', 'who', 'which', 'do', 'does', 'did', 'have', 'has', 'had', 'are', 'was', 'were',
-                'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create',
-            ];
-            $nonSelective = ['typo3', 'cms'];
-
-            $cleanedWords = [];
-            foreach ($rawWords as $word) {
-                $wordLower = mb_strtolower($word);
-                if (!in_array($wordLower, $stopwords, true)) {
-                    $cleanedWords[] = $word;
-                }
-            }
-
-            $finalWords = [];
-            foreach ($cleanedWords as $word) {
-                $wordLower = mb_strtolower($word);
-                if (in_array($wordLower, $nonSelective, true)) {
-                    continue;
-                }
-                $finalWords[] = $word;
-            }
-
-            if ($finalWords !== []) {
-                $words = $finalWords;
-            } elseif ($cleanedWords !== []) {
-                $words = $cleanedWords;
-            } else {
-                $words = $rawWords;
-            }
+        $changeTypeConstraint = $this->buildChangeTypeConstraint($queryBuilder, $changeType);
+        if ($changeTypeConstraint !== null) {
+            $constraints[] = $changeTypeConstraint;
         }
 
-        // 1. Fulltext search: Combine title and content matches with OR
-        if ($words !== []) {
-            $searchConditions = [];
-            foreach ($words as $word) {
-                $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
-                $searchConditions[] = $queryBuilder->expr()->like('title', $wordParam);
-                $searchConditions[] = $queryBuilder->expr()->like('content', $wordParam);
-            }
-            $constraints[] = $queryBuilder->expr()->or(...$searchConditions);
-        }
-
-        // 2. Intelligent version filtering
-        if ($typo3Version !== null && $typo3Version !== '') {
-            $targetParts = explode('.', $typo3Version);
-            $targetMajor = (int)$targetParts[0];
-
-            if ($prompt !== null && $prompt !== '') {
-                // For keyword searches, allow any version less than or equal to the target major version.
-                // Further precise filtering (down to minor/patch) is done in PHP after retrieving records.
-                $constraints[] = $queryBuilder->expr()->lte(
-                    'major_version',
-                    $queryBuilder->createNamedParameter($targetMajor, Connection::PARAM_INT),
-                );
-            } else {
-                // For non-search listings, match the requested version strictly.
-                if (count($targetParts) === 1) {
-                    $constraints[] = $queryBuilder->expr()->eq(
-                        'major_version',
-                        $queryBuilder->createNamedParameter($targetMajor, Connection::PARAM_INT),
-                    );
-                } else {
-                    $normalizedVersion = $targetParts[0] . '.' . $targetParts[1];
-                    $constraints[] = $queryBuilder->expr()->like(
-                        'version_string',
-                        $queryBuilder->createNamedParameter($normalizedVersion . '%'),
-                    );
-                }
-            }
-        }
-
-        // 3. Category filter
-        if ($changeType !== null && $changeType !== '') {
-            $constraints[] = $queryBuilder->expr()->eq(
-                'change_type',
-                $queryBuilder->createNamedParameter($changeType),
-            );
-        }
-
-        // Apply all constraints with AND
+        $queryBuilder->from(self::TABLE);
         if ($constraints !== []) {
             $queryBuilder->where($queryBuilder->expr()->and(...$constraints));
         }
 
-        // 4. Scoring in SQL
-        $scoreParts = [];
-        $isFeatureIntent = false;
-        $isDeprecationIntent = false;
-        $isBreakingIntent = false;
-
-        if ($prompt !== null && $prompt !== '') {
-            $promptLower = mb_strtolower($prompt);
-            $featureKeywords = ['implement', 'new', 'add', 'create', 'introduce', 'feature', 'introduction'];
-            $deprecationKeywords = ['upgrade', 'deprecated', 'deprecation', 'migrate', 'migration', 'replace', 'replacement', 'obsolete'];
-            $breakingKeywords = ['removed', 'removal', 'delete', 'deleted', 'breaking', 'broken', 'remove'];
-
-            foreach ($featureKeywords as $keyword) {
-                if (str_contains($promptLower, $keyword)) {
-                    $isFeatureIntent = true;
-                    break;
-                }
-            }
-            foreach ($deprecationKeywords as $keyword) {
-                if (str_contains($promptLower, $keyword)) {
-                    $isDeprecationIntent = true;
-                    break;
-                }
-            }
-            foreach ($breakingKeywords as $keyword) {
-                if (str_contains($promptLower, $keyword)) {
-                    $isBreakingIntent = true;
-                    break;
-                }
-            }
+        $countQueryBuilder = clone $queryBuilder;
+        $totalCount = (int)$countQueryBuilder->count('*')->executeQuery()->fetchOne();
+        if ($totalCount === 0) {
+            return ['totalCount' => 0, 'items' => []];
         }
 
-        foreach ($words as $word) {
-            $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
-            $scoreParts[] = 'CASE WHEN title LIKE ' . $wordParam . ' THEN 20 ELSE 0 END';
-            $scoreParts[] = 'CASE WHEN content LIKE ' . $wordParam . ' THEN 5 ELSE 0 END';
-        }
-
-        if ($isFeatureIntent) {
-            $scoreParts[] = "CASE WHEN change_type = 'Feature' THEN 50 ELSE 0 END";
-        }
-        if ($isDeprecationIntent) {
-            $scoreParts[] = "CASE WHEN change_type = 'Deprecation' THEN 50 ELSE 0 END";
-        }
-        if ($isBreakingIntent) {
-            $scoreParts[] = "CASE WHEN change_type = 'Breaking' THEN 50 ELSE 0 END";
-        }
-
-        $scoreExpression = $scoreParts !== [] ? '(' . implode(' + ', $scoreParts) . ')' : '0';
-
-        $queryBuilder
+        $scoreExpression = $this->buildScoreExpression($queryBuilder, $prompt, $words);
+        $items = $queryBuilder
             ->select('*')
             ->addSelectLiteral($scoreExpression . ' AS score')
-            ->from(self::TABLE)
             ->orderBy('score', 'DESC')
-            ->setMaxResults($prompt !== null && $prompt !== '' ? 100 : 50);
+            ->addOrderBy('major_version', 'DESC')
+            ->addOrderBy('uid', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
-        $results = $queryBuilder->executeQuery()->fetchAllAssociative();
-
-        if ($prompt !== null && $prompt !== '' && $typo3Version !== null && $typo3Version !== '') {
-            $filteredResults = [];
-            foreach ($results as $result) {
-                if ($this->isVersionCompatible($result['version_string'], $typo3Version)) {
-                    $filteredResults[] = $result;
-                }
-            }
-            $results = $filteredResults;
-        }
-
-        $maxScore = 0;
-        foreach ($results as $result) {
-            $score = (int)($result['score'] ?? 0);
-            if ($score > $maxScore) {
-                $maxScore = $score;
-            }
-        }
-
-        if ($maxScore >= 20) {
-            $finalResults = [];
-            foreach ($results as $result) {
-                if ((int)($result['score'] ?? 0) >= 20) {
-                    $finalResults[] = $result;
-                }
-            }
-            return array_slice($finalResults, 0, 25);
-        }
-
-        return array_slice($results, 0, 10);
+        return ['totalCount' => $totalCount, 'items' => $items];
     }
 
     public function getChangelogContentByUid(int $uid): ?string
@@ -276,40 +135,162 @@ class ChangelogRepository implements LoggerAwareInterface
         return $queryBuilder;
     }
 
-    private function isVersionCompatible(string $dbVersion, string $targetVersion): bool
+    /**
+     * @return list<string>
+     */
+    private function extractSearchWords(?string $prompt): array
     {
-        $dbParts = explode('.', $dbVersion);
-        $targetParts = explode('.', $targetVersion);
-
-        $dbMajor = (int)($dbParts[0] ?? 0);
-        $dbMinor = isset($dbParts[1]) ? (int)$dbParts[1] : 0;
-        $dbPatch = isset($dbParts[2]) ? (int)$dbParts[2] : 0;
-
-        $targetMajor = (int)($targetParts[0] ?? 0);
-
-        if (count($targetParts) === 1) {
-            return $dbMajor <= $targetMajor;
+        if ($prompt === null || $prompt === '') {
+            return [];
         }
 
-        $targetMinor = (int)$targetParts[1];
-        if (count($targetParts) === 2) {
-            if ($dbMajor < $targetMajor) {
+        $rawWords = array_values(array_filter(explode(' ', $prompt)));
+        $stopWords = [
+            'how', 'to', 'the', 'a', 'an', 'of', 'in', 'and', 'is', 'for', 'with', 'on', 'as', 'by', 'at', 'it', 'from',
+            'what', 'why', 'where', 'when', 'who', 'which', 'do', 'does', 'did', 'have', 'has', 'had', 'are', 'was', 'were',
+            'correctly', 'write', 'about', 'use', 'using', 'get', 'set', 'make', 'create',
+        ];
+        $nonSelective = ['typo3', 'cms'];
+
+        $cleanedWords = [];
+        foreach ($rawWords as $word) {
+            if (!in_array(mb_strtolower($word), $stopWords, true)) {
+                $cleanedWords[] = $word;
+            }
+        }
+
+        $finalWords = [];
+        foreach ($cleanedWords as $word) {
+            if (!in_array(mb_strtolower($word), $nonSelective, true)) {
+                $finalWords[] = $word;
+            }
+        }
+
+        return $finalWords !== [] ? $finalWords : ($cleanedWords !== [] ? $cleanedWords : $rawWords);
+    }
+
+    /**
+     * @param list<string> $words
+     * @return list<CompositeExpression>
+     */
+    private function buildSearchConstraints(QueryBuilder $queryBuilder, array $words): array
+    {
+        if ($words === []) {
+            return [];
+        }
+
+        $searchConditions = [];
+        foreach ($words as $word) {
+            $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
+            $searchConditions[] = $queryBuilder->expr()->like('title', $wordParam);
+            $searchConditions[] = $queryBuilder->expr()->like('content', $wordParam);
+        }
+
+        return [$queryBuilder->expr()->or(...$searchConditions)];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function buildVersionConstraints(
+        QueryBuilder $queryBuilder,
+        ?string $fromVersion,
+        ?string $toVersion,
+    ): array {
+        $hasFrom = $fromVersion !== null && $fromVersion !== '';
+        $hasTo = $toVersion !== null && $toVersion !== '';
+
+        if ($hasFrom && $hasTo) {
+            $fromMajor = (int)explode('.', $fromVersion)[0];
+            $toMajor = (int)explode('.', $toVersion)[0];
+            return [
+                $queryBuilder->expr()->gte('major_version', $queryBuilder->createNamedParameter($fromMajor, Connection::PARAM_INT)),
+                $queryBuilder->expr()->lte('major_version', $queryBuilder->createNamedParameter($toMajor, Connection::PARAM_INT)),
+            ];
+        }
+        if ($hasTo) {
+            $toMajor = (int)explode('.', $toVersion)[0];
+            return [
+                $queryBuilder->expr()->lte('major_version', $queryBuilder->createNamedParameter($toMajor, Connection::PARAM_INT)),
+            ];
+        }
+        if ($hasFrom) {
+            $fromMajor = (int)explode('.', $fromVersion)[0];
+            return [
+                $queryBuilder->expr()->gte('major_version', $queryBuilder->createNamedParameter($fromMajor, Connection::PARAM_INT)),
+            ];
+        }
+        return [];
+    }
+
+    private function buildChangeTypeConstraint(QueryBuilder $queryBuilder, ?string $changeType): ?string
+    {
+        if ($changeType === null || $changeType === '') {
+            return null;
+        }
+
+        $normalizedType = ucfirst(strtolower($changeType));
+        return $queryBuilder->expr()->eq(
+            'change_type',
+            $queryBuilder->createNamedParameter($normalizedType),
+        );
+    }
+
+    /**
+     * @param list<string> $words
+     */
+    private function buildScoreExpression(QueryBuilder $queryBuilder, ?string $prompt, array $words): string
+    {
+        $scoreParts = [];
+
+        foreach ($words as $word) {
+            $wordParam = $queryBuilder->createNamedParameter('%' . $word . '%');
+            $scoreParts[] = 'CASE WHEN title LIKE ' . $wordParam . ' THEN 20 ELSE 0 END';
+            $scoreParts[] = 'CASE WHEN content LIKE ' . $wordParam . ' THEN 5 ELSE 0 END';
+        }
+
+        if ($prompt !== null && $prompt !== '') {
+            $scoreParts = array_merge($scoreParts, $this->buildIntentScoreParts($prompt));
+        }
+
+        return $scoreParts !== [] ? '(' . implode(' + ', $scoreParts) . ')' : '0';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function buildIntentScoreParts(string $prompt): array
+    {
+        $promptLower = mb_strtolower($prompt);
+        $scoreParts = [];
+
+        $featureKeywords = ['implement', 'new', 'add', 'create', 'introduce', 'feature', 'introduction'];
+        $deprecationKeywords = ['upgrade', 'deprecated', 'deprecation', 'migrate', 'migration', 'replace', 'replacement', 'obsolete'];
+        $breakingKeywords = ['removed', 'removal', 'delete', 'deleted', 'breaking', 'broken', 'remove'];
+
+        if ($this->matchesAnyKeyword($promptLower, $featureKeywords)) {
+            $scoreParts[] = "CASE WHEN change_type = 'Feature' THEN 50 ELSE 0 END";
+        }
+        if ($this->matchesAnyKeyword($promptLower, $deprecationKeywords)) {
+            $scoreParts[] = "CASE WHEN change_type = 'Deprecation' THEN 50 ELSE 0 END";
+        }
+        if ($this->matchesAnyKeyword($promptLower, $breakingKeywords)) {
+            $scoreParts[] = "CASE WHEN change_type = 'Breaking' THEN 50 ELSE 0 END";
+        }
+
+        return $scoreParts;
+    }
+
+    /**
+     * @param list<string> $keywords
+     */
+    private function matchesAnyKeyword(string $text, array $keywords): bool
+    {
+        foreach ($keywords as $keyword) {
+            if (str_contains($text, $keyword)) {
                 return true;
             }
-            return $dbMajor === $targetMajor && $dbMinor <= $targetMinor;
         }
-
-        $targetPatch = (int)$targetParts[2];
-        if ($dbMajor < $targetMajor) {
-            return true;
-        }
-        if ($dbMajor === $targetMajor) {
-            if ($dbMinor < $targetMinor) {
-                return true;
-            }
-            return $dbMinor === $targetMinor && $dbPatch <= $targetPatch;
-        }
-
         return false;
     }
 }

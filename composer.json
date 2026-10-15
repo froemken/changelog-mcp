@@ -2,6 +2,7 @@
 	"name": "stefanfroemken/changelog-mcp",
 	"description": "MCP for TYPO3 Changelogs - Catalogue the TYPO3 contained changelogs and provide information via MCP",
 	"license": "GPL-2.0-or-later",
+	"version": "0.4.0",
 	"type": "typo3-cms-extension",
 	"authors": [
 		{
@@ -48,7 +49,7 @@
 				"providesPackages": {}
 			},
 			"extension-key": "changelog_mcp",
-			"version": "0.0.3",
+			"version": "0.4.0",
 			"web-dir": ".Build/public"
 		}
 	}

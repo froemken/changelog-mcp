@@ -62,7 +62,7 @@ The following runtime components and tools must be present:
 
 - PHP 8.2 or higher with `ext-mbstring`.
 - TYPO3 v14 core packages: `typo3/cms-core` and `typo3/cms-reactions`.
-- Composer packages: `doctrine/rst-parser` (^0.5) and `mcp/sdk` (^0.6).
+- Composer packages: `doctrine/rst-parser` (^0.5) and `mcp/sdk` (^0.8).
 - Initialized TYPO3 database containing table `tx_changelogmcp_changelog` via `vendor/bin/typo3 extension:setup`.
 - Write permissions for the session directory `var/changelog_mcp_sessions/`.
 - Development tools: `Build/Scripts/runTests.sh`, `phpstan/phpstan`, and `typo3/coding-standards`.
