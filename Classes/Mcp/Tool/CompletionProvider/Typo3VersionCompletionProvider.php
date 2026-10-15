@@ -42,7 +42,7 @@ readonly class Typo3VersionCompletionProvider implements ProviderInterface
         } else {
             $normalizedVersion = $currentValue;
             $majorVersion = $currentValue;
-            $typo3VersionColumn = 'major_string';
+            $typo3VersionColumn = 'major_version';
         }
 
         $queryBuilder = $this->getQueryBuilder();

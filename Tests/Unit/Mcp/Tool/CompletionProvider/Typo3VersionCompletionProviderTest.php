@@ -65,8 +65,8 @@ final class Typo3VersionCompletionProviderTest extends UnitTestCase
 
         $expressionBuilder->expects($this->once())
             ->method('eq')
-            ->with('major_string', ':dcValue1')
-            ->willReturn('major_string = :dcValue1');
+            ->with('major_version', ':dcValue1')
+            ->willReturn('major_version = :dcValue1');
 
         $connectionPool->expects($this->once())
             ->method('getQueryBuilderForTable')
