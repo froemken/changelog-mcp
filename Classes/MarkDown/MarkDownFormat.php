@@ -35,6 +35,7 @@ use StefanFroemken\ChangelogMcp\MarkDown\Directive\CsvTable;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\Hint;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\Important;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\Index;
+use StefanFroemken\ChangelogMcp\MarkDown\Directive\ListTable;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\Note;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\RstClass;
 use StefanFroemken\ChangelogMcp\MarkDown\Directive\SeeAlso;
@@ -81,6 +82,7 @@ class MarkDownFormat implements Format
             new Hint(),
             new Important(),
             new Index(),
+            new ListTable(),
             new Note(),
             new RstClass(),
             new SeeAlso(),

@@ -46,7 +46,7 @@ final class MarkDownFormatTest extends UnitTestCase
         $format = new MarkDownFormat($templateRenderer);
 
         $directives = $format->getDirectives();
-        self::assertCount(17, $directives);
+        self::assertCount(18, $directives);
         self::assertContainsOnlyInstancesOf(Directive::class, $directives);
     }
 
