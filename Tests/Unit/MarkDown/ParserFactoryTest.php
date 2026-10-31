@@ -36,4 +36,20 @@ final class ParserFactoryTest extends UnitTestCase
         self::assertStringContainsString('Header', $rendered);
         self::assertStringContainsString('Paragraph text.', $rendered);
     }
+
+    #[Test]
+    public function getParserParsesReStWithUnknownAndCustomReferencesWithoutException(): void
+    {
+        $factory = new ParserFactory();
+        $parser = $factory->getParser();
+
+        $rst = "Header\n======\n\nSee :http:`GET /test` and :https:`https://example.com` and :arbitrary-custom:`custom value`.";
+        $document = $parser->parse($rst);
+
+        self::assertInstanceOf(DocumentNode::class, $document);
+        $rendered = $document->render();
+        self::assertStringContainsString('GET /test', $rendered);
+        self::assertStringContainsString('https://example.com', $rendered);
+        self::assertStringContainsString('custom value', $rendered);
+    }
 }

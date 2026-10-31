@@ -16,6 +16,7 @@ use Doctrine\RST\Formats\InternalFormat;
 use Doctrine\RST\Kernel;
 use Doctrine\RST\Parser;
 use Doctrine\RST\Templates\TwigTemplateRenderer;
+use StefanFroemken\ChangelogMcp\MarkDown\Environment\ChangelogEnvironment;
 use StefanFroemken\ChangelogMcp\MarkDown\Reference\GenericReference;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -32,8 +33,9 @@ class ParserFactory
         $configuration->addFormat(new InternalFormat(new MarkDownFormat($templateRenderer)));
 
         $kernel = $this->getKernel($configuration);
+        $environment = new ChangelogEnvironment($configuration);
 
-        $parser = new Parser($kernel);
+        $parser = new Parser($kernel, $environment);
 
         // Do not follow includes
         $parser->setIncludePolicy(false);
@@ -44,6 +46,9 @@ class ParserFactory
     private function getConfiguration(): Configuration
     {
         $configuration = new Configuration();
+
+        // Do not abort on non-fatal errors
+        $configuration->abortOnError(false);
 
         // Ignore un-resolvable references
         $configuration->setIgnoreInvalidReferences(true);
@@ -103,8 +108,12 @@ class ParserFactory
                 new GenericReference('file'),
                 new GenericReference('fluid'),
                 new GenericReference('folder'),
+                new GenericReference('forge'),
+                new GenericReference('git'),
                 new GenericReference('guilabel'),
                 new GenericReference('html'),
+                new GenericReference('http'),
+                new GenericReference('https'),
                 new GenericReference('issue'),
                 new GenericReference('javascript'),
                 new GenericReference('js'),
@@ -113,8 +122,10 @@ class ParserFactory
                 new GenericReference('path'),
                 new GenericReference('php'),
                 new GenericReference('PHP'),
+                new GenericReference('php-short'),
                 new GenericReference('quote'),
                 new GenericReference('ref'),
+                new GenericReference('rfc'),
                 new GenericReference('samp'),
                 new GenericReference('shell'),
                 new GenericReference('sql'),
